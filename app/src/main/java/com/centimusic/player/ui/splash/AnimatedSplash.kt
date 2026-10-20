@@ -151,10 +151,10 @@ fun AnimatedSplash(onFinished: () -> Unit, modifier: Modifier = Modifier) {
             Modifier
                 .size(288.dp)
                 .graphicsLayer {
-                    val s = 1f - 0.38f * lift.value
+                    val s = 1f - 0.28f * lift.value
                     scaleX = s
                     scaleY = s
-                    translationY = -96.dp.toPx() * lift.value
+                    translationY = -64.dp.toPx() * lift.value
                 },
         ) {
             val unit = size.width / 108f
@@ -177,7 +177,7 @@ fun AnimatedSplash(onFinished: () -> Unit, modifier: Modifier = Modifier) {
         }
 
         Column(
-            Modifier.offset(y = 64.dp),
+            Modifier.offset(y = 40.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             val shown = typing.value.toInt()
