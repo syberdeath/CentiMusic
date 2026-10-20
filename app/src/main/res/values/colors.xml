@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="nm_black">#FF080808</color>
+    <color name="nm_offwhite">#FFFAFAF8</color>
+    <color name="nm_red">#FFFF3030</color>
+    <color name="nm_icon_bg">#FF000000</color>
+</resources>
