@@ -70,7 +70,8 @@ class MusicRepository(
     val library: StateFlow<Library> = combine(
         mediaStoreSongs,
         importedDao.observeAll().map { rows -> rows.map { it.toSong() } },
-    ) { stored, imported -> Library.from(stored + imported) }
+        preferences.preferences.map { it.hideDuplicates }.distinctUntilChanged(),
+    ) { stored, imported, hideDuplicates -> Library.from(stored + imported, hideDuplicates) }
         .flowOn(Dispatchers.Default)
         .stateIn(scope, SharingStarted.Eagerly, Library())
 

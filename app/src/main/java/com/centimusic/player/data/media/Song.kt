@@ -72,6 +72,8 @@ data class Library(
     val artists: List<Artist> = emptyList(),
     val folders: List<Folder> = emptyList(),
     val byId: Map<String, Song> = emptyMap(),
+    /** Duplicate copies hidden from the library; their ids still resolve (to the kept copy) via [byId]. */
+    val hiddenDuplicates: Int = 0,
 ) {
     val isEmpty: Boolean get() = songs.isEmpty()
 
@@ -80,8 +82,10 @@ data class Library(
     fun folder(path: String): Folder? = folders.firstOrNull { it.path == path }
 
     companion object {
-        fun from(songs: List<Song>): Library {
-            val distinct = songs.distinctBy { it.id }
+        fun from(songs: List<Song>, hideDuplicates: Boolean = false): Library {
+            val all = songs.distinctBy { it.id }
+            val aliases = if (hideDuplicates) Duplicates.find(all) else emptyMap()
+            val distinct = if (aliases.isEmpty()) all else all.filterNot { it.id in aliases }
             val albumOrder = compareBy<Song>({ it.trackNumber.takeIf { n -> n > 0 } ?: Int.MAX_VALUE }, { it.title.lowercase() })
             val albums = distinct.groupBy { it.albumKey }.map { (key, list) ->
                 val sorted = list.sortedWith(albumOrder)
@@ -103,7 +107,11 @@ data class Library(
             val folders = distinct.groupBy { it.folder }.map { (path, list) ->
                 Folder(path, list.sortedBy { it.title.lowercase() })
             }.sortedBy { it.path.lowercase() }
-            return Library(distinct, albums, artists, folders, distinct.associateBy { it.id })
+            val byId = HashMap<String, Song>(all.size)
+            distinct.associateByTo(byId) { it.id }
+            // Playlists, likes and saved queues that point at a hidden copy keep working.
+            aliases.forEach { (hidden, kept) -> byId[kept]?.let { byId[hidden] = it } }
+            return Library(distinct, albums, artists, folders, byId, aliases.size)
         }
     }
 }

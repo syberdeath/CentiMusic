@@ -46,7 +46,11 @@ data class SongListUiState(
     val likedIds: Set<String> = emptySet(),
     val emptyTitle: String = "Nothing here yet",
     val emptyMessage: String = "",
+    /** All Songs only: duplicate filter state, or null where it doesn't apply. */
+    val duplicates: DuplicateFilter? = null,
 )
+
+data class DuplicateFilter(val enabled: Boolean, val hidden: Int)
 
 class SongListViewModel(private val container: AppContainer, private val source: SongListSource) : ViewModel() {
     val state: StateFlow<SongListUiState> = combine(
@@ -56,17 +60,20 @@ class SongListViewModel(private val container: AppContainer, private val source:
         container.history.recentlyPlayedIds,
         container.preferences.preferences,
     ) { library, scan, liked, played, prefs ->
-        build(library, scan, liked, played, prefs.songSort)
+        build(library, scan, liked, played, prefs.songSort).let {
+            if (source == SongListSource.AllSongs) it.copy(duplicates = DuplicateFilter(prefs.hideDuplicates, library.hiddenDuplicates)) else it
+        }
     }.flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SongListUiState())
 
     fun setSort(sort: SongSort) = viewModelScope.launch { container.preferences.setSongSort(sort) }
+    fun setHideDuplicates(hide: Boolean) = viewModelScope.launch { container.preferences.setHideDuplicates(hide) }
 
-    fun unlike(song: Song) = viewModelScope.launch { container.favorites.setLiked(song.id, false) }
+    fun unlike(song: Song) = viewModelScope.launch { container.favorites.setLiked(song, false, container.music.library.value) }
 
     private fun build(library: Library, scan: ScanState, liked: List<String>, played: List<String>, sort: SongSort): SongListUiState {
         val loading = scan == ScanState.Idle || (scan == ScanState.Scanning && library.isEmpty)
-        val likedSet = liked.toSet()
+        val likedSet = container.favorites.likedSongIds(liked, library)
         fun summary(songs: List<Song>) = "${songs.size.pluralSongs()} · ${songs.sumOf { it.durationMs }.formatTotalDuration()}"
         return when (source) {
             SongListSource.AllSongs -> {
@@ -75,7 +82,7 @@ class SongListViewModel(private val container: AppContainer, private val source:
                     emptyMessage = "Songs on this device will appear here.")
             }
             SongListSource.Liked -> {
-                val songs = liked.mapNotNull { library.byId[it] }
+                val songs = liked.mapNotNull { library.byId[it] }.distinctBy { it.id }
                 SongListUiState(loading, "Collection", "Liked Songs", summary(songs), songs, likedIds = likedSet,
                     emptyTitle = "No liked songs", emptyMessage = "Tap the heart on the player to save songs here.")
             }
@@ -84,7 +91,7 @@ class SongListViewModel(private val container: AppContainer, private val source:
                 SongListUiState(loading, "Library", "Recently Added", summary(songs), songs, likedIds = likedSet)
             }
             SongListSource.RecentlyPlayed -> {
-                val songs = played.mapNotNull { library.byId[it] }
+                val songs = played.mapNotNull { library.byId[it] }.distinctBy { it.id }
                 SongListUiState(loading, "History", "Recently Played", summary(songs), songs, likedIds = likedSet,
                     emptyTitle = "Nothing played yet", emptyMessage = "Songs you listen to will show up here.")
             }

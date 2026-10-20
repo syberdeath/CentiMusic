@@ -110,9 +110,9 @@ fun SongActionsHost(controller: SongMenuController) {
                 SheetAction(NmIcons.PlaylistAdd, "Add to playlist") {
                     close { controller.pickPlaylistFor(listOf(song)) }
                 }
-                val isLiked = song.id in liked
+                val isLiked = song.id in container.favorites.likedSongIds(liked, container.music.library.value)
                 SheetAction(if (isLiked) NmIcons.HeartFilled else NmIcons.Heart, if (isLiked) "Remove from Liked Songs" else "Add to Liked Songs") {
-                    scope.launch { container.favorites.setLiked(song.id, !isLiked) }
+                    scope.launch { container.favorites.setLiked(song, !isLiked, container.music.library.value) }
                     close()
                 }
                 request.playlistId?.let { playlistId ->

@@ -96,7 +96,8 @@ fun NowPlayingScreen() {
         LaunchedEffect(Unit) { navigator.back() }
         return
     }
-    val isLiked = song.id in liked
+    val library by container.music.library.collectAsStateWithLifecycle()
+    val isLiked = song.id in container.favorites.likedSongIds(liked, library)
     val shownPosition = scrubFraction?.let { (it * playback.durationMs).toLong() } ?: position
 
     Column(
@@ -214,7 +215,7 @@ fun NowPlayingScreen() {
                 NmIconButton(
                     if (isLiked) NmIcons.HeartFilled else NmIcons.Heart,
                     if (isLiked) "Remove from Liked Songs" else "Add to Liked Songs",
-                    { scope.launch { container.favorites.setLiked(song.id, !isLiked) } },
+                    { scope.launch { container.favorites.setLiked(song, !isLiked, library) } },
                     tint = if (isLiked) colors.accent else colors.textPrimary,
                 )
             }

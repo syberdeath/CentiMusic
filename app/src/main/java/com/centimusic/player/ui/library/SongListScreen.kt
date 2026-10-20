@@ -1,6 +1,7 @@
 package com.centimusic.player.ui.library
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -69,6 +70,11 @@ fun SongListScreen(source: SongListSource) {
                 onShuffle = { container.player.shuffle(state.songs) },
                 onAddToPlaylist = { menu.pickPlaylistFor(state.songs) },
             )
+        }
+        state.duplicates?.let { dup ->
+            item(key = "duplicates") {
+                DuplicateNote(dup, onToggle = { vm.setHideDuplicates(!dup.enabled) })
+            }
         }
         when {
             state.loading -> item(key = "loading") { LoadingState("Loading songs") }
@@ -177,5 +183,42 @@ private fun CollectionHeader(
             }
             Spacer(Modifier.height(Spacing.m))
         }
+    }
+}
+
+/** "12 duplicates hidden · Show all" — or an offer to hide them when the filter is off. */
+@Composable
+private fun DuplicateNote(filter: DuplicateFilter, onToggle: () -> Unit) {
+    if (filter.enabled && filter.hidden == 0) return
+    val colors = NmTheme.colors
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = Spacing.gutter)
+            .padding(bottom = Spacing.s),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            Modifier
+                .size(6.dp)
+                .clip(CircleShape)
+                .background(if (filter.enabled) colors.accent else colors.textTertiary),
+        )
+        Spacer(Modifier.width(Spacing.s))
+        Text(
+            if (filter.enabled) "${filter.hidden} duplicate ${if (filter.hidden == 1) "song" else "songs"} hidden" else "Showing duplicates",
+            style = NmTheme.type.bodySmall,
+            color = colors.textSecondary,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            if (filter.enabled) "Show all" else "Hide duplicates",
+            style = NmTheme.type.dotCaption,
+            color = colors.accent,
+            modifier = Modifier
+                .clip(androidx.compose.foundation.shape.RoundedCornerShape(4.dp))
+                .clickable(onClick = onToggle)
+                .padding(horizontal = Spacing.xs, vertical = Spacing.s),
+        )
     }
 }

@@ -101,6 +101,9 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     fun setSkipSilence(v: Boolean) {
         viewModelScope.launch { prefs.setSkipSilence(v) }
     }
+    fun setHideDuplicates(v: Boolean) {
+        viewModelScope.launch { prefs.setHideDuplicates(v) }
+    }
     fun setVisualizerLock(v: Boolean) {
         viewModelScope.launch { prefs.setVisualizerOnLockScreen(v) }
     }
@@ -191,6 +194,15 @@ fun SettingsScreen() {
         }
 
         item { GroupLabel("Library") }
+        item {
+            ToggleRow(
+                NmIcons.Note,
+                "Hide duplicate songs",
+                "Show one entry when the same song is stored more than once (same title, artist and length)",
+                prefs.hideDuplicates,
+                vm::setHideDuplicates,
+            )
+        }
         item {
             ToggleRow(NmIcons.Note, "Ignore short audio", "Hide files shorter than 30 seconds, like ringtones and voice notes", prefs.ignoreShortTracks, vm::setIgnoreShort)
         }

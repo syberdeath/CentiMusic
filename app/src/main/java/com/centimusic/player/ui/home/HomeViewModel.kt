@@ -35,7 +35,7 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
             scanState = scan,
             songCount = library.songs.size,
             allSongs = library.songs,
-            recentlyPlayed = playedIds.mapNotNull { library.byId[it] }.take(20),
+            recentlyPlayed = playedIds.mapNotNull { library.byId[it] }.distinctBy { it.id }.take(20),
             recentlyAdded = library.songs.sortedByDescending { it.dateAddedSec }.take(20),
             albums = library.albums.sortedByDescending { album -> album.songs.maxOf { it.dateAddedSec } }.take(12),
         )

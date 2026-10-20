@@ -35,8 +35,10 @@ class PlaylistRepository(
     }
 
     private fun PlaylistEntity.toPlaylist(mediaIds: List<String>, lib: Library): Playlist {
-        val songs = mediaIds.mapNotNull { lib.byId[it] }
-        return Playlist(id, name, songs, mediaIds.size - songs.size)
+        val resolved = mediaIds.mapNotNull { lib.byId[it] }
+        // A playlist holding two copies of a now-merged duplicate lists the song once.
+        val songs = resolved.distinctBy { it.id }
+        return Playlist(id, name, songs, mediaIds.size - resolved.size)
     }
 
     suspend fun create(name: String, initial: List<String> = emptyList()): Long {

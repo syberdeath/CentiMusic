@@ -58,7 +58,7 @@ class LibraryViewModel(container: AppContainer) : ViewModel() {
         container.music.scanState,
     ) { library, liked, playlists, scan ->
         LibraryUiState(
-            liked = liked.count { it in library.byId },
+            liked = liked.mapNotNullTo(HashSet()) { library.byId[it]?.id }.size,
             playlists = playlists.size,
             albums = library.albums.size,
             artists = library.artists.size,

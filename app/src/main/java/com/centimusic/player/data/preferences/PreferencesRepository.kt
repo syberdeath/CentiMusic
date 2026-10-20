@@ -29,6 +29,8 @@ data class UserPreferences(
     val ignoreShortTracks: Boolean = true,
     /** Let the visualizer stay over the keyguard while it is open (showWhenLocked). */
     val visualizerOnLockScreen: Boolean = false,
+    /** Collapse the same song stored more than once into a single entry. */
+    val hideDuplicates: Boolean = true,
 )
 
 /** Playback position bookkeeping for queue restoration. */
@@ -48,6 +50,7 @@ class PreferencesRepository(private val context: Context) {
         val skipSilence = booleanPreferencesKey("skip_silence")
         val ignoreShort = booleanPreferencesKey("ignore_short_tracks")
         val visualizerLock = booleanPreferencesKey("visualizer_on_lock_screen")
+        val hideDuplicates = booleanPreferencesKey("hide_duplicates")
         val resumeIndex = intPreferencesKey("resume_index")
         val resumePosition = longPreferencesKey("resume_position")
     }
@@ -64,6 +67,7 @@ class PreferencesRepository(private val context: Context) {
             skipSilence = p[Keys.skipSilence] ?: false,
             ignoreShortTracks = p[Keys.ignoreShort] ?: true,
             visualizerOnLockScreen = p[Keys.visualizerLock] ?: false,
+            hideDuplicates = p[Keys.hideDuplicates] ?: true,
         )
     }
 
@@ -77,6 +81,7 @@ class PreferencesRepository(private val context: Context) {
     suspend fun setSkipSilence(value: Boolean) = context.dataStore.edit { it[Keys.skipSilence] = value }
     suspend fun setIgnoreShortTracks(value: Boolean) = context.dataStore.edit { it[Keys.ignoreShort] = value }
     suspend fun setVisualizerOnLockScreen(value: Boolean) = context.dataStore.edit { it[Keys.visualizerLock] = value }
+    suspend fun setHideDuplicates(value: Boolean) = context.dataStore.edit { it[Keys.hideDuplicates] = value }
 
     suspend fun savePlaybackModes(shuffle: Boolean, repeatMode: Int) = context.dataStore.edit {
         it[Keys.shuffle] = shuffle

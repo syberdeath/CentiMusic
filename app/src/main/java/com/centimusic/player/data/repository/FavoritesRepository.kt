@@ -2,6 +2,8 @@ package com.centimusic.player.data.repository
 
 import com.centimusic.player.data.database.FavoriteDao
 import com.centimusic.player.data.database.FavoriteEntity
+import com.centimusic.player.data.media.Library
+import com.centimusic.player.data.media.Song
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -18,6 +20,19 @@ class FavoritesRepository(private val dao: FavoriteDao, scope: CoroutineScope) {
 
     suspend fun setLiked(mediaId: String, liked: Boolean) {
         if (liked) dao.insert(FavoriteEntity(mediaId, System.currentTimeMillis())) else dao.delete(mediaId)
+    }
+
+    /** Liked songs as they appear in [library]: likes on a hidden duplicate count for the kept copy. */
+    fun likedSongIds(likedIds: List<String>, library: Library): Set<String> =
+        likedIds.mapNotNullTo(HashSet()) { library.byId[it]?.id }
+
+    /** Like [song], or unlike it including any hidden duplicate copies that were liked. */
+    suspend fun setLiked(song: Song, liked: Boolean, library: Library) {
+        if (liked) {
+            setLiked(song.id, true)
+        } else {
+            likedIds.value.filter { it == song.id || library.byId[it]?.id == song.id }.forEach { dao.delete(it) }
+        }
     }
 
     suspend fun toggle(mediaId: String): Boolean {
