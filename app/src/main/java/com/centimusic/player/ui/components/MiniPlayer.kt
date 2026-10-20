@@ -23,6 +23,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.material3.Icon
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextOverflow
@@ -91,12 +93,28 @@ fun MiniPlayer(
                 Text(song.title, style = NmTheme.type.body, color = colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(song.artist, style = NmTheme.type.caption, color = colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            NmIconButton(
-                if (state.isPlaying) NmIcons.Pause else NmIcons.Play,
-                if (state.isPlaying) "Pause" else "Play",
-                player::togglePlayPause,
-                iconSize = 22.dp,
-            )
+            Box(
+                Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .clickable(role = Role.Button, onClick = player::togglePlayPause),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(colors.accent),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        if (state.isPlaying) NmIcons.Pause else NmIcons.Play,
+                        if (state.isPlaying) "Pause" else "Play",
+                        tint = colors.onAccent,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            }
             NmIconButton(NmIcons.Next, "Next track", player::next, enabled = state.hasNext, iconSize = 20.dp)
         }
         // Thin progress line along the bottom edge.

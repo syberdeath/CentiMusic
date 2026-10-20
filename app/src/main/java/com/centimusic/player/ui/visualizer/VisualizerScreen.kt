@@ -141,14 +141,14 @@ fun VisualizerScreen() {
             ) {
                 IconTap(NmIcons.Previous, "Previous track", player::previous, size = 28)
                 Box(
-                    Modifier.size(72.dp).clip(CircleShape).background(Color.White)
+                    Modifier.size(72.dp).clip(CircleShape).background(AccentRed)
                         .clickable(role = Role.Button, onClick = player::togglePlayPause),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         if (playback.isPlaying) NmIcons.Pause else NmIcons.Play,
                         if (playback.isPlaying) "Pause" else "Play",
-                        tint = Black,
+                        tint = Color.White,
                         modifier = Modifier.size(30.dp),
                     )
                 }

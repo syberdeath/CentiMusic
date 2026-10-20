@@ -166,10 +166,11 @@ fun NowPlayingScreen() {
                                 scaleY = s
                             },
                     ) {
+                        // Circular, so it sits fully inside the pulse ring like a record.
                         Artwork(
                             current,
                             Modifier.fillMaxSize(),
-                            corner = 16.dp,
+                            corner = side / 2,
                             sizeHint = 1024.dp,
                             contentModifier = Modifier.graphicsLayer {
                                 // Ken Burns drift: always zoomed in enough that the edges never show.
@@ -182,23 +183,6 @@ fun NowPlayingScreen() {
                                 translationY = size.height * 0.035f * cos(t * 0.17f)
                             },
                         )
-                        if (playback.isPlaying) {
-                            Box(
-                                Modifier
-                                    .align(Alignment.TopEnd)
-                                    .padding(14.dp)
-                                    .size(16.dp)
-                                    .graphicsLayer {
-                                        val l = pulse.level
-                                        val s = 0.85f + 0.45f * l
-                                        scaleX = s
-                                        scaleY = s
-                                        alpha = 0.6f + 0.4f * l
-                                    }
-                                    .clip(CircleShape)
-                                    .background(colors.accent),
-                            )
-                        }
                     }
                 }
             }
@@ -322,7 +306,7 @@ private fun PlayPauseButton(isPlaying: Boolean, onClick: () -> Unit) {
         Modifier
             .size(72.dp)
             .clip(CircleShape)
-            .background(colors.inverse)
+            .background(colors.accent)
             .clickable(role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -330,12 +314,12 @@ private fun PlayPauseButton(isPlaying: Boolean, onClick: () -> Unit) {
             Icon(
                 if (playing) NmIcons.Pause else NmIcons.Play,
                 contentDescription = if (playing) "Pause" else "Play",
-                tint = colors.onInverse,
+                tint = colors.onAccent,
                 modifier = Modifier.size(30.dp),
             )
         }
     }
 }
 
-/** Artwork side relative to the square area it sits in; the rest is room for the pulse halo. */
-private const val ARTWORK_FRACTION = 0.84f
+/** Artwork diameter relative to the square area it sits in; the rest is room for the pulse ring and dots. */
+private const val ARTWORK_FRACTION = 0.76f

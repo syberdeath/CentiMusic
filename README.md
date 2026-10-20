@@ -119,11 +119,15 @@ Accent `#FF3030` in both. Large headings use **Doto** (dot-matrix, SIL OFL 1.1 â
 
 ### App icon
 
-The launcher icon is a red (`#FF3030`) disc carrying a white dot-matrix play symbol (45 dots on a hex
-lattice) on black. The monochrome layer for Android 13+ themed icons is the disc with the dots punched
-out, and the notification icon is the dotted play symbol alone. The launch screen and animated splash
-use the separate dot-equalizer mark (`drawable/ic_centimusic_mark.xml`) that the splash animation is
-built from.
+The CentiMusic mark is an original dot-matrix equalizer: five columns of white dots on black, with the
+top dot of the tallest column in red. It is used for the launcher icon (with a monochrome layer for
+themed icons), the launch screen, the animated splash and the notification.
+
+### Controls
+
+The main play/pause button is a red (`#FF3030`) disc with a white glyph on Now Playing, the visualizer
+and the mini-player; other controls are white (black in the light theme), and active shuffle/repeat
+turn red. On Now Playing the artwork is circular and sits at the centre of the pulse ring.
 
 ### Typography
 
