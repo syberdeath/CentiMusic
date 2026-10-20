@@ -72,6 +72,7 @@ import com.centimusic.player.ui.playlists.PlaylistsScreen
 import com.centimusic.player.ui.queue.QueueScreen
 import com.centimusic.player.ui.search.SearchScreen
 import com.centimusic.player.ui.settings.SettingsScreen
+import com.centimusic.player.ui.splash.AnimatedSplash
 import com.centimusic.player.ui.theme.NmTheme
 import com.centimusic.player.ui.theme.CentiMusicTheme
 import com.centimusic.player.ui.theme.Spacing
@@ -94,7 +95,9 @@ fun CentiMusicRoot(container: AppContainer) {
                 }
             }
         }
-        val access = rememberLibraryAccess(container, messenger)
+        // Shown once per launch; survives rotation so it doesn't replay.
+        var showSplash by rememberSaveable { mutableStateOf(true) }
+        val access = rememberLibraryAccess(container, messenger, askForPermission = !showSplash)
 
         LaunchedEffect(Unit) {
             container.player.messages.collect { messenger(it) }
@@ -107,8 +110,11 @@ fun CentiMusicRoot(container: AppContainer) {
             LocalSongMenu provides songMenu,
             LocalLibraryAccess provides access,
         ) {
-            AppScaffold(navController, navigator, container, snackbar)
-            SongActionsHost(songMenu)
+            Box(Modifier.fillMaxSize()) {
+                AppScaffold(navController, navigator, container, snackbar)
+                SongActionsHost(songMenu)
+                if (showSplash) AnimatedSplash(onFinished = { showSplash = false })
+            }
         }
     }
 }
@@ -221,7 +227,7 @@ private fun NavBackStackEntry.stringArg(name: String): String = arguments?.getSt
 
 /** Requests audio access (and notification permission on 13+) and launches the system file picker. */
 @Composable
-private fun rememberLibraryAccess(container: AppContainer, message: (String) -> Unit): LibraryAccess {
+private fun rememberLibraryAccess(container: AppContainer, message: (String) -> Unit, askForPermission: Boolean): LibraryAccess {
     val context = LocalContext.current
     val activity = context as? Activity
     val scope = rememberCoroutineScope()
@@ -248,12 +254,13 @@ private fun rememberLibraryAccess(container: AppContainer, message: (String) -> 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) add(Manifest.permission.POST_NOTIFICATIONS)
     }.toTypedArray()
 
-    LaunchedEffect(Unit) {
-        if (!askedOnLaunch && !AudioPermission.isGranted(context)) {
+    LaunchedEffect(Unit) { container.music.pruneImported() }
+    // Wait for the launch animation before showing the system permission dialog.
+    LaunchedEffect(askForPermission) {
+        if (askForPermission && !askedOnLaunch && !AudioPermission.isGranted(context)) {
             askedOnLaunch = true
             permissionLauncher.launch(permissions())
         }
-        container.music.pruneImported()
     }
 
     return LibraryAccess(

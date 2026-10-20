@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import com.centimusic.player.navigation.CentiMusicRoot
 import kotlinx.coroutines.launch
@@ -13,7 +14,8 @@ class MainActivity : ComponentActivity() {
     private val container get() = (application as CentiMusicApp).container
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        setTheme(R.style.Theme_CentiMusic) // Replace the launch (splash) window background.
+        // Swaps the launch theme for Theme.CentiMusic; AnimatedSplash takes over from the system splash.
+        installSplashScreen().setOnExitAnimationListener { it.remove() }
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         if (savedInstanceState == null) handleViewIntent(intent)

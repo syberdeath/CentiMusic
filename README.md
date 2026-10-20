@@ -20,6 +20,7 @@ no streaming and no network permission.
 | **Now Playing** | Large artwork with animated transitions, dot-matrix title, like, seek bar with scrubbing, shuffle, previous, play/pause, next, repeat (off/all/one), current audio output, queue. |
 | **Queue** | Mirrors the real ExoPlayer playlist in play order: now playing, up next, tap to jump, remove, drag to reorder (when shuffle is off), clear. |
 | **Playback** | Media3 ExoPlayer inside a `MediaSessionService`: background playback, media notification, lock-screen and Bluetooth/headset controls, audio focus, pause on "becoming noisy", skip silence, missing-file skipping, and queue/position restore (including Android's media resumption). |
+| **Launch** | Animated splash: the dot equalizer from the app icon bounces, the CentiMusic wordmark types out in dot-matrix, then "Made by Vincent with ♥" fades in. It continues seamlessly from the system launch screen (AndroidX SplashScreen), plays once per launch, and can be skipped with a tap. |
 | **Settings** | Theme (System/Light/Dark, applied instantly), remember shuffle & repeat, resume last queue, pause on disconnect, skip silence, ignore short audio, rescan, import, clear search history, privacy, about, version. Stored in DataStore. |
 
 ## Tech stack

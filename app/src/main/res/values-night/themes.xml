@@ -5,7 +5,4 @@
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
-    <style name="Theme.CentiMusic.Splash">
-        <item name="android:windowBackground">@drawable/splash_background</item>
-    </style>
 </resources>
