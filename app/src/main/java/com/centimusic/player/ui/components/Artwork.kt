@@ -42,6 +42,8 @@ fun Artwork(
     modifier: Modifier = Modifier,
     corner: Dp = Spacing.artworkCorner,
     sizeHint: Dp = 64.dp,
+    /** Applied to the image inside the rounded clip, e.g. a slow zoom that stays within the frame. */
+    contentModifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val px = with(LocalDensity.current) { sizeHint.roundToPx() }
@@ -56,9 +58,9 @@ fun Artwork(
         Crossfade(targetState = bitmap, animationSpec = tween(220), label = "artwork") { bmp ->
             if (bmp != null) {
                 val image = remember(bmp) { bmp.asImageBitmap() }
-                Image(image, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+                Image(image, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize().then(contentModifier))
             } else {
-                ArtworkPlaceholder(seed = song?.albumKey?.hashCode() ?: 0, modifier = Modifier.fillMaxSize())
+                ArtworkPlaceholder(seed = song?.albumKey?.hashCode() ?: 0, modifier = Modifier.fillMaxSize().then(contentModifier))
             }
         }
     }

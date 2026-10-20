@@ -3,6 +3,9 @@ package com.centimusic.player.ui.player
 import android.content.Intent
 import android.provider.Settings
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -39,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
@@ -56,6 +60,8 @@ import com.centimusic.player.ui.theme.NmIcons
 import com.centimusic.player.ui.theme.NmTheme
 import com.centimusic.player.ui.theme.Spacing
 import kotlinx.coroutines.launch
+import kotlin.math.cos
+import kotlin.math.sin
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -72,6 +78,14 @@ fun NowPlayingScreen() {
     val position by remember(player) { player.positionTicker() }.collectAsStateWithLifecycle(0L)
     var scrubFraction by remember { mutableStateOf<Float?>(null) }
     val scope = androidx.compose.runtime.rememberCoroutineScope()
+
+    val motion = rememberArtworkMotion(playing = playback.isPlaying)
+    // Shrinks a little on pause and springs back when playback resumes.
+    val cardScale by animateFloatAsState(
+        targetValue = if (playback.isPlaying) 1f else 0.9f,
+        animationSpec = spring(dampingRatio = 0.55f, stiffness = Spring.StiffnessLow),
+        label = "cardScale",
+    )
 
     val song = playback.current
     if (song == null) {
@@ -126,14 +140,43 @@ fun NowPlayingScreen() {
                 contentKey = { it.id },
                 label = "artwork",
             ) { current ->
-                Box(Modifier.size(side)) {
-                    Artwork(current, Modifier.fillMaxSize(), corner = 16.dp, sizeHint = 1024.dp)
+                Box(
+                    Modifier
+                        .size(side)
+                        .graphicsLayer {
+                            scaleX = cardScale
+                            scaleY = cardScale
+                        },
+                ) {
+                    Artwork(
+                        current,
+                        Modifier.fillMaxSize(),
+                        corner = 16.dp,
+                        sizeHint = 1024.dp,
+                        contentModifier = Modifier.graphicsLayer {
+                            // Ken Burns drift: always zoomed in enough that the edges never show.
+                            if (!motion.enabled) return@graphicsLayer
+                            val t = motion.phase
+                            val zoom = 1.10f + 0.05f * sin(t * 0.21f)
+                            scaleX = zoom
+                            scaleY = zoom
+                            translationX = size.width * 0.035f * sin(t * 0.13f)
+                            translationY = size.height * 0.035f * cos(t * 0.17f)
+                        },
+                    )
                     if (playback.isPlaying) {
                         Box(
                             Modifier
                                 .align(Alignment.TopEnd)
                                 .padding(16.dp)
                                 .size(18.dp)
+                                .graphicsLayer {
+                                    val beat = if (motion.enabled) 0.5f + 0.5f * sin(motion.phase * 3.4f) else 1f
+                                    val s = 0.85f + 0.3f * beat
+                                    scaleX = s
+                                    scaleY = s
+                                    alpha = 0.65f + 0.35f * beat
+                                }
                                 .clip(CircleShape)
                                 .background(colors.accent),
                         )
