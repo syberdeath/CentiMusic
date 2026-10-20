@@ -1,6 +1,5 @@
 package com.centimusic.player.ui.player
 
-import android.provider.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -8,8 +7,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.withFrameNanos
+import com.centimusic.player.ui.pulse.rememberIsVisible
+import com.centimusic.player.ui.pulse.rememberMotionEnabled
 
 /**
  * A clock for the Now Playing artwork animation. [phase] (in seconds) only advances while music is
@@ -23,14 +23,12 @@ class ArtworkMotion(val enabled: Boolean) {
 
 @Composable
 fun rememberArtworkMotion(playing: Boolean): ArtworkMotion {
-    val context = LocalContext.current
-    // Honour the system "Remove animations" setting.
-    val enabled = remember {
-        Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) > 0f
-    }
-    val motion = remember { ArtworkMotion(enabled) }
-    LaunchedEffect(playing, enabled) {
-        if (!playing || !enabled) return@LaunchedEffect
+    // Honour the system "Remove animations" setting, and stop ticking while the screen isn't visible.
+    val enabled = rememberMotionEnabled()
+    val visible = rememberIsVisible()
+    val motion = remember(enabled) { ArtworkMotion(enabled) }
+    LaunchedEffect(motion, playing, visible) {
+        if (!playing || !enabled || !visible) return@LaunchedEffect
         var last = withFrameNanos { it }
         while (true) {
             withFrameNanos { now ->

@@ -55,6 +55,8 @@ import com.centimusic.player.navigation.LocalNavigator
 import com.centimusic.player.navigation.LocalSongMenu
 import com.centimusic.player.playback.OutputKind
 import com.centimusic.player.ui.components.Artwork
+import com.centimusic.player.ui.pulse.PulseHalo
+import com.centimusic.player.ui.pulse.rememberArtworkPulse
 import com.centimusic.player.ui.components.NmIconButton
 import com.centimusic.player.ui.theme.NmIcons
 import com.centimusic.player.ui.theme.NmTheme
@@ -80,6 +82,7 @@ fun NowPlayingScreen() {
     val scope = androidx.compose.runtime.rememberCoroutineScope()
 
     val motion = rememberArtworkMotion(playing = playback.isPlaying)
+    val pulse = rememberArtworkPulse(playing = playback.isPlaying, trackKey = playback.current?.id, historySize = 72)
     // Shrinks a little on pause and springs back when playback resumes.
     val cardScale by animateFloatAsState(
         targetValue = if (playback.isPlaying) 1f else 0.9f,
@@ -131,56 +134,71 @@ fun NowPlayingScreen() {
                 .padding(horizontal = 28.dp, vertical = Spacing.l),
             contentAlignment = Alignment.Center,
         ) {
-            val side = minOf(maxWidth, maxHeight)
-            AnimatedContent(
-                targetState = song,
-                transitionSpec = {
-                    (fadeIn(tween(320)) + scaleIn(tween(320), initialScale = 0.94f)) togetherWith
-                        (fadeOut(tween(200)) + scaleOut(tween(200), targetScale = 0.98f))
-                },
-                contentKey = { it.id },
-                label = "artwork",
-            ) { current ->
-                Box(
-                    Modifier
-                        .size(side)
-                        .graphicsLayer {
-                            scaleX = cardScale
-                            scaleY = cardScale
-                        },
-                ) {
-                    Artwork(
-                        current,
-                        Modifier.fillMaxSize(),
-                        corner = 16.dp,
-                        sizeHint = 1024.dp,
-                        contentModifier = Modifier.graphicsLayer {
-                            // Ken Burns drift: always zoomed in enough that the edges never show.
-                            if (!motion.enabled) return@graphicsLayer
-                            val t = motion.phase
-                            val zoom = 1.10f + 0.05f * sin(t * 0.21f)
-                            scaleX = zoom
-                            scaleY = zoom
-                            translationX = size.width * 0.035f * sin(t * 0.13f)
-                            translationY = size.height * 0.035f * cos(t * 0.17f)
-                        },
-                    )
-                    if (playback.isPlaying) {
-                        Box(
-                            Modifier
-                                .align(Alignment.TopEnd)
-                                .padding(16.dp)
-                                .size(18.dp)
-                                .graphicsLayer {
-                                    val beat = if (motion.enabled) 0.5f + 0.5f * sin(motion.phase * 3.4f) else 1f
-                                    val s = 0.85f + 0.3f * beat
-                                    scaleX = s
-                                    scaleY = s
-                                    alpha = 0.65f + 0.35f * beat
-                                }
-                                .clip(CircleShape)
-                                .background(colors.accent),
+            val area = minOf(maxWidth, maxHeight)
+            val side = area * ARTWORK_FRACTION
+            Box(Modifier.size(area), contentAlignment = Alignment.Center) {
+                // Behind the artwork: red ring + dot halo, driven by the audible audio level.
+                PulseHalo(
+                    pulse = pulse,
+                    artworkFraction = ARTWORK_FRACTION,
+                    rotationDeg = { motion.phase * 3f },
+                    modifier = Modifier.fillMaxSize(),
+                    dotColor = colors.textPrimary,
+                    accent = colors.accent,
+                    restColor = colors.textPrimary,
+                )
+                AnimatedContent(
+                    targetState = song,
+                    transitionSpec = {
+                        (fadeIn(tween(320)) + scaleIn(tween(320), initialScale = 0.94f)) togetherWith
+                            (fadeOut(tween(200)) + scaleOut(tween(200), targetScale = 0.98f))
+                    },
+                    contentKey = { it.id },
+                    label = "artwork",
+                ) { current ->
+                    Box(
+                        Modifier
+                            .size(side)
+                            .graphicsLayer {
+                                // Shrinks on pause; breathes very slightly with the pulse while playing.
+                                val s = cardScale * (1f + 0.025f * pulse.level)
+                                scaleX = s
+                                scaleY = s
+                            },
+                    ) {
+                        Artwork(
+                            current,
+                            Modifier.fillMaxSize(),
+                            corner = 16.dp,
+                            sizeHint = 1024.dp,
+                            contentModifier = Modifier.graphicsLayer {
+                                // Ken Burns drift: always zoomed in enough that the edges never show.
+                                if (!motion.enabled) return@graphicsLayer
+                                val t = motion.phase
+                                val zoom = 1.10f + 0.05f * sin(t * 0.21f)
+                                scaleX = zoom
+                                scaleY = zoom
+                                translationX = size.width * 0.035f * sin(t * 0.13f)
+                                translationY = size.height * 0.035f * cos(t * 0.17f)
+                            },
                         )
+                        if (playback.isPlaying) {
+                            Box(
+                                Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(14.dp)
+                                    .size(16.dp)
+                                    .graphicsLayer {
+                                        val l = pulse.level
+                                        val s = 0.85f + 0.45f * l
+                                        scaleX = s
+                                        scaleY = s
+                                        alpha = 0.6f + 0.4f * l
+                                    }
+                                    .clip(CircleShape)
+                                    .background(colors.accent),
+                            )
+                        }
                     }
                 }
             }
@@ -318,3 +336,6 @@ private fun PlayPauseButton(isPlaying: Boolean, onClick: () -> Unit) {
         }
     }
 }
+
+/** Artwork side relative to the square area it sits in; the rest is room for the pulse halo. */
+private const val ARTWORK_FRACTION = 0.84f

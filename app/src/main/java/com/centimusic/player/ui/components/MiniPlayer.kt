@@ -16,17 +16,21 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.centimusic.player.playback.PlaybackState
 import com.centimusic.player.playback.PlayerConnection
+import com.centimusic.player.ui.pulse.rememberArtworkPulse
 import com.centimusic.player.ui.theme.NmIcons
 import com.centimusic.player.ui.theme.NmTheme
 import com.centimusic.player.ui.theme.Spacing
@@ -41,6 +45,7 @@ fun MiniPlayer(
     val song = state.current ?: return
     val colors = NmTheme.colors
     val position by remember(player) { player.positionTicker(500) }.collectAsStateWithLifecycle(0L)
+    val pulse = rememberArtworkPulse(playing = state.isPlaying, trackKey = song.id)
     val progress = if (state.durationMs > 0) (position.toFloat() / state.durationMs).coerceIn(0f, 1f) else 0f
 
     Column(modifier.background(colors.background)) {
@@ -53,8 +58,33 @@ fun MiniPlayer(
                 .padding(start = Spacing.l, end = Spacing.xs),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            AnimatedContent(song, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "miniArt") { s ->
-                Artwork(s, Modifier.size(44.dp), corner = Spacing.thumbCorner, sizeHint = 48.dp)
+            Box(Modifier.size(44.dp)) {
+                AnimatedContent(song, transitionSpec = { fadeIn() togetherWith fadeOut() }, contentKey = { it.id }, label = "miniArt") { s ->
+                    Artwork(
+                        s,
+                        Modifier
+                            .size(44.dp)
+                            .graphicsLayer {
+                                // Restrained: at most 4% larger at full loudness.
+                                val k = 1f + 0.04f * pulse.level
+                                scaleX = k
+                                scaleY = k
+                            },
+                        corner = Spacing.thumbCorner,
+                        sizeHint = 48.dp,
+                    )
+                }
+                if (state.isPlaying) {
+                    Box(
+                        Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(3.dp)
+                            .size(6.dp)
+                            .graphicsLayer { alpha = 0.45f + 0.55f * pulse.level }
+                            .clip(CircleShape)
+                            .background(colors.accent),
+                    )
+                }
             }
             Spacer(Modifier.width(Spacing.m))
             Column(Modifier.weight(1f)) {

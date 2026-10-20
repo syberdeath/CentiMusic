@@ -46,8 +46,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.centimusic.player.data.media.formatDuration
 import com.centimusic.player.data.preferences.UserPreferences
@@ -55,6 +53,7 @@ import com.centimusic.player.navigation.LocalAppContainer
 import com.centimusic.player.navigation.LocalNavigator
 import com.centimusic.player.playback.AudioLevelMeter
 import com.centimusic.player.ui.components.Artwork
+import com.centimusic.player.ui.pulse.rememberIsVisible
 import com.centimusic.player.ui.theme.AccentRed
 import com.centimusic.player.ui.theme.DefaultNmType
 import com.centimusic.player.ui.theme.NmIcons
@@ -80,8 +79,7 @@ fun VisualizerScreen() {
     val position by remember(player) { player.positionTicker(200) }.collectAsStateWithLifecycle(0L)
 
     // Battery: animate only while playing AND the screen is actually visible.
-    val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateFlow.collectAsStateWithLifecycle()
-    val visible = lifecycleState.isAtLeast(Lifecycle.State.STARTED)
+    val visible = rememberIsVisible()
     val song = playback.current
 
     BoxWithConstraints(Modifier.fillMaxSize().background(Black)) {
