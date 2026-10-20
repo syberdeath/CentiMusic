@@ -94,6 +94,9 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     fun setSkipSilence(v: Boolean) {
         viewModelScope.launch { prefs.setSkipSilence(v) }
     }
+    fun setVisualizerLock(v: Boolean) {
+        viewModelScope.launch { prefs.setVisualizerOnLockScreen(v) }
+    }
     fun setIgnoreShort(v: Boolean) {
         viewModelScope.launch { prefs.setIgnoreShortTracks(v) }
     }
@@ -169,6 +172,15 @@ fun SettingsScreen() {
         }
         item {
             ToggleRow(NmIcons.Waveform, "Skip silence", "Trim silent passages during playback", prefs.skipSilence, vm::setSkipSilence)
+        }
+        item {
+            ToggleRow(
+                NmIcons.Shield,
+                "Visualizer on lock screen",
+                "If the visualizer is open when your phone locks, show it over the lock screen. Unlock to leave it.",
+                prefs.visualizerOnLockScreen,
+                vm::setVisualizerLock,
+            )
         }
 
         item { GroupLabel("Library") }

@@ -73,6 +73,7 @@ import com.centimusic.player.ui.queue.QueueScreen
 import com.centimusic.player.ui.search.SearchScreen
 import com.centimusic.player.ui.settings.SettingsScreen
 import com.centimusic.player.ui.splash.AnimatedSplash
+import com.centimusic.player.ui.visualizer.VisualizerScreen
 import com.centimusic.player.ui.theme.NmTheme
 import com.centimusic.player.ui.theme.CentiMusicTheme
 import com.centimusic.player.ui.theme.Spacing
@@ -192,6 +193,11 @@ private fun AppScaffold(
                     enterTransition = { slideInVertically(tween(300)) { it / 3 } + fadeIn(tween(200)) },
                     popExitTransition = { slideOutVertically(tween(260)) { it / 3 } + fadeOut(tween(200)) },
                 ) { QueueScreen() }
+                composable(
+                    Routes.VISUALIZER,
+                    enterTransition = { fadeIn(tween(350)) },
+                    popExitTransition = { fadeOut(tween(250)) },
+                ) { VisualizerScreen() }
             }
         }
 

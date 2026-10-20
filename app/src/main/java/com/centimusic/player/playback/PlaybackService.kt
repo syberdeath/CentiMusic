@@ -11,6 +11,8 @@ import androidx.media3.common.Player
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.datasource.DataSourceBitmapLoader
+import androidx.media3.session.CacheBitmapLoader
 import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
@@ -53,7 +55,8 @@ class PlaybackService : MediaSessionService() {
 
     override fun onCreate() {
         super.onCreate()
-        player = ExoPlayer.Builder(this)
+        // MeteringRenderersFactory feeds the in-app visualizer from decoded audio (no extra permissions).
+        player = ExoPlayer.Builder(this, MeteringRenderersFactory(this))
             .setAudioAttributes(
                 AudioAttributes.Builder()
                     .setUsage(C.USAGE_MEDIA)
@@ -75,6 +78,7 @@ class PlaybackService : MediaSessionService() {
         session = MediaSession.Builder(this, player)
             .setSessionActivity(openApp)
             .setCallback(SessionCallback())
+            .setBitmapLoader(ArtworkBitmapLoader(this, CacheBitmapLoader(DataSourceBitmapLoader(this)), scope))
             .build()
 
         setMediaNotificationProvider(

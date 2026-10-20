@@ -27,6 +27,8 @@ data class UserPreferences(
     val pauseOnDisconnect: Boolean = true,
     val skipSilence: Boolean = false,
     val ignoreShortTracks: Boolean = true,
+    /** Let the visualizer stay over the keyguard while it is open (showWhenLocked). */
+    val visualizerOnLockScreen: Boolean = false,
 )
 
 /** Playback position bookkeeping for queue restoration. */
@@ -45,6 +47,7 @@ class PreferencesRepository(private val context: Context) {
         val pauseOnDisconnect = booleanPreferencesKey("pause_on_disconnect")
         val skipSilence = booleanPreferencesKey("skip_silence")
         val ignoreShort = booleanPreferencesKey("ignore_short_tracks")
+        val visualizerLock = booleanPreferencesKey("visualizer_on_lock_screen")
         val resumeIndex = intPreferencesKey("resume_index")
         val resumePosition = longPreferencesKey("resume_position")
     }
@@ -60,6 +63,7 @@ class PreferencesRepository(private val context: Context) {
             pauseOnDisconnect = p[Keys.pauseOnDisconnect] ?: true,
             skipSilence = p[Keys.skipSilence] ?: false,
             ignoreShortTracks = p[Keys.ignoreShort] ?: true,
+            visualizerOnLockScreen = p[Keys.visualizerLock] ?: false,
         )
     }
 
@@ -72,6 +76,7 @@ class PreferencesRepository(private val context: Context) {
     suspend fun setPauseOnDisconnect(value: Boolean) = context.dataStore.edit { it[Keys.pauseOnDisconnect] = value }
     suspend fun setSkipSilence(value: Boolean) = context.dataStore.edit { it[Keys.skipSilence] = value }
     suspend fun setIgnoreShortTracks(value: Boolean) = context.dataStore.edit { it[Keys.ignoreShort] = value }
+    suspend fun setVisualizerOnLockScreen(value: Boolean) = context.dataStore.edit { it[Keys.visualizerLock] = value }
 
     suspend fun savePlaybackModes(shuffle: Boolean, repeatMode: Int) = context.dataStore.edit {
         it[Keys.shuffle] = shuffle

@@ -24,11 +24,12 @@ object Routes {
     const val SETTINGS = "settings"
     const val PLAYER = "player"
     const val QUEUE = "queue"
+    const val VISUALIZER = "visualizer"
 
     val tabs = listOf(HOME, SEARCH, LIBRARY)
 
     /** Full-screen destinations that hide the bottom navigation and mini-player. */
-    val immersive = setOf(PLAYER, QUEUE)
+    val immersive = setOf(PLAYER, QUEUE, VISUALIZER)
 }
 
 /** Typed navigation actions so screens never build route strings themselves. */
@@ -59,4 +60,5 @@ class Navigator(private val nav: NavHostController) {
     fun settings() = nav.navigate(Routes.SETTINGS) { launchSingleTop = true }
     fun player() = nav.navigate(Routes.PLAYER) { launchSingleTop = true }
     fun queue() = nav.navigate(Routes.QUEUE) { launchSingleTop = true }
+    fun visualizer() = nav.navigate(Routes.VISUALIZER) { launchSingleTop = true }
 }

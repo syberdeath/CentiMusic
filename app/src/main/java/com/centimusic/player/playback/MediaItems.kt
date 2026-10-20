@@ -11,6 +11,7 @@ import com.centimusic.player.data.media.SongSource
 internal const val EXTRA_DURATION = "nm.duration"
 internal const val EXTRA_ALBUM_ID = "nm.album_id"
 internal const val EXTRA_SOURCE = "nm.source"
+internal const val EXTRA_MEDIA_ID = "nm.media_id"
 
 fun Song.toMediaItem(): MediaItem = MediaItem.Builder()
     .setMediaId(id)
@@ -26,7 +27,7 @@ fun Song.toMediaItem(): MediaItem = MediaItem.Builder()
             .setIsPlayable(true)
             .setIsBrowsable(false)
             .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
-            .setExtras(bundleOf(EXTRA_DURATION to durationMs, EXTRA_ALBUM_ID to albumId, EXTRA_SOURCE to source.name))
+            .setExtras(bundleOf(EXTRA_DURATION to durationMs, EXTRA_ALBUM_ID to albumId, EXTRA_SOURCE to source.name, EXTRA_MEDIA_ID to id))
             .build(),
     )
     .build()

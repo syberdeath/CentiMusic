@@ -119,6 +119,7 @@ fun NowPlayingScreen() {
                     )
                 }
             }
+            NmIconButton(NmIcons.Waveform, "Open visualizer", navigator::visualizer)
             NmIconButton(NmIcons.MoreVertical, "More options", { menu.open(song) })
         }
 
