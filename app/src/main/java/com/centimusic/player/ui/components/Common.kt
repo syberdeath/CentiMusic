@@ -138,7 +138,7 @@ fun SectionHeader(title: String, modifier: Modifier = Modifier, action: String? 
         if (action != null && onAction != null) {
             Text(
                 action,
-                style = NmTheme.type.bodySmall,
+                style = NmTheme.type.dotCaption,
                 color = NmTheme.colors.textSecondary,
                 modifier = Modifier
                     .clip(RoundedCornerShape(4.dp))

@@ -56,7 +56,7 @@ private val SplashBlack = Color(0xFF080808)
 private const val APP_NAME = "CentiMusic"
 
 /**
- * Same geometry as the launcher mark (res/drawable/ic_launcher_foreground.xml) on its 108-unit grid:
+ * Same geometry as the launcher mark (res/drawable/ic_centimusic_mark.xml) on its 108-unit grid:
  * five dot columns on a common baseline, the tallest one capped with a red dot.
  */
 private val restHeights = floatArrayOf(2f, 4f, 6f, 3f, 5f)

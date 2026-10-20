@@ -63,7 +63,7 @@ fun BottomNavBar(selectedTab: String?, onSelect: (String) -> Unit, modifier: Mod
                 ) {
                     Icon(tab.icon, contentDescription = null, tint = tint, modifier = Modifier.size(22.dp))
                     Spacer(Modifier.height(4.dp))
-                    Text(tab.label, style = NmTheme.type.caption, color = tint)
+                    Text(tab.label, style = NmTheme.type.dotCaption, color = tint)
                 }
             }
         }

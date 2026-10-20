@@ -102,7 +102,7 @@ fun VisualizerScreen() {
             Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconTap(NmIcons.ChevronDown, "Close visualizer", leave)
                 Spacer(Modifier.weight(1f))
-                Text("VISUALIZER", style = DefaultNmType.caption, color = Tertiary)
+                Text("VISUALIZER", style = DefaultNmType.dotCaption, color = Tertiary)
                 Spacer(Modifier.weight(1f))
                 Spacer(Modifier.width(48.dp))
             }
@@ -128,9 +128,9 @@ fun VisualizerScreen() {
 
             DotProgress(position, playback.durationMs, playback.isPlaying, onSeek = player::seekTo)
             Row(Modifier.fillMaxWidth()) {
-                Text(position.formatDuration(), style = DefaultNmType.caption, color = Secondary)
+                Text(position.formatDuration(), style = DefaultNmType.dotCaption, color = Secondary)
                 Spacer(Modifier.weight(1f))
-                Text(playback.durationMs.formatDuration(), style = DefaultNmType.caption, color = Secondary)
+                Text(playback.durationMs.formatDuration(), style = DefaultNmType.dotCaption, color = Secondary)
             }
 
             Spacer(Modifier.height(24.dp))

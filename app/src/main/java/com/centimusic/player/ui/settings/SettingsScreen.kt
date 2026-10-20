@@ -271,7 +271,7 @@ private enum class SettingsDialog { Theme, Privacy, About }
 private fun GroupLabel(text: String) {
     Text(
         text.uppercase(),
-        style = NmTheme.type.caption,
+        style = NmTheme.type.dotCaption,
         color = NmTheme.colors.textTertiary,
         modifier = Modifier.padding(start = Spacing.gutter, end = Spacing.gutter, top = Spacing.xxl, bottom = Spacing.xs),
     )

@@ -119,6 +119,65 @@ Accent `#FF3030` in both. Large headings use **Doto** (dot-matrix, SIL OFL 1.1 �
 
 ### App icon
 
+The launcher icon is a red (`#FF3030`) disc carrying a white dot-matrix play symbol (45 dots on a hex
+lattice) on black. The monochrome layer for Android 13+ themed icons is the disc with the dots punched
+out, and the notification icon is the dotted play symbol alone. The launch screen and animated splash
+use the separate dot-equalizer mark (`drawable/ic_centimusic_mark.xml`) that the splash animation is
+built from.
+
+### Typography
+
+Dot-matrix (Doto) is used for screen and section headings, track titles, the bottom-navigation labels,
+buttons, time and duration labels and small section kickers. Song, artist and album lines in lists stay
+in the sans-serif face for readability.
+
+## Visualizer and the lock screen
+
+### How the waveform is driven
+
+Android's `android.media.audiofx.Visualizer` requires the `RECORD_AUDIO` (microphone) permission,
+so CentiMusic doesn't use it. Instead ExoPlayer is built with `MeteringRenderersFactory`, which wraps
+the real audio sink in `LevelMeteringAudioSink`, a pass-through `ForwardingAudioSink`:
+
+- Decoded PCM (16/24/32-bit integer or float) is measured in 25 ms slices; each slice's RMS level is
+  stored on a dB scale with its presentation timestamp (`AudioLevelMeter`).
+- The sink also reports the timestamp currently being output, so the UI shows only levels that are
+  already audible. The waveform follows what you hear rather than audio that is still buffered.
+- Each column of the waveform is one measured slice; smoothing is limited to a fast-attack/slow-release
+  filter. Nothing is randomised. For formats that can't be measured (e.g. passthrough), the screen
+  says "Live levels aren't available for this audio format" instead of faking motion.
+- Metering only runs while the visualizer is on screen; the frame loop runs only while music is playing
+  and the app is visible. Pausing freezes the waveform; a new track clears it. No extra permissions.
+
+### What appears where
+
+| Where | What you get |
+| --- | --- |
+| **System lock screen and notification** | Android's standard media controls from the Media3 `MediaSessionService`: title, artist, album, artwork (loaded by `ArtworkBitmapLoader`, including embedded art of imported files), play/pause, previous, next and the seek bar. Android draws these itself. Apps cannot put a custom or animated view inside the system lock-screen media controls, so the visualizer is **not** shown there. |
+| **Inside CentiMusic** | The animated visualizer (Now Playing → waveform button). |
+| **Optional: Settings → "Visualizer on lock screen"** (off by default) | While the visualizer is open, CentiMusic's window is allowed to show over the keyguard (`setShowWhenLocked`). If the phone locks while you're on that screen, waking it shows the visualizer without unlocking, and the controls still work. Leaving it while locked asks you to unlock first, so the rest of the app stays protected. The app never launches itself over the lock screen (Android restricts background activity starts and full-screen intents), so this only applies when the visualizer was already open. |
+
+## Permissions
+
+| Permission | Why |
+| --- | --- |
+| `READ_MEDIA_AUDIO` (Android 13+) / `READ_EXTERNAL_STORAGE` (Android 8–12, `maxSdkVersion 32`) | Read the device's audio through MediaStore. No broad storage access is requested. |
+| `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK` | Keep playing in the background. |
+| `POST_NOTIFICATIONS` (Android 13+) | Show the playback notification. |
+| `WAKE_LOCK` | Keep the CPU awake while playing with the screen off. |
+
+If audio access is denied the app still works with files picked through the system file picker.
+
+## Design
+
+Dark: background `#080808`, text `#FFFFFF` / `#A0A0A0`, dividers `#252525`.
+Light: background `#FAFAF8`, text `#111111` / `#686868`, dividers `#E5E5E2`.
+Accent `#FF3030` in both. Large headings use **Doto** (dot-matrix, SIL OFL 1.1 — see
+`licenses/Doto-OFL.txt`); metadata uses the system sans-serif. Icons are custom vectors drawn on a
+24-unit grid with one 1.6 stroke weight.
+
+### App icon
+
 The CentiMusic mark is an original dot-matrix equalizer: five columns of white dots rising from a
 common baseline on black, with the top dot of the tallest column in red. It ships as an adaptive
 vector icon with a monochrome layer for Android 13 themed icons, and the same mark is used for the

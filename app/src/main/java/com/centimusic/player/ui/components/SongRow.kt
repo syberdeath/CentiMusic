@@ -93,7 +93,7 @@ fun SongRow(
             )
         }
         Spacer(Modifier.width(Spacing.s))
-        Text(song.durationMs.formatDuration(), style = NmTheme.type.caption, color = colors.textTertiary)
+        Text(song.durationMs.formatDuration(), style = NmTheme.type.dotCaption, color = colors.textTertiary)
         if (trailing != null) {
             trailing()
         } else if (onMore != null) {

@@ -149,7 +149,7 @@ private fun CollectionHeader(
                 }
                 Spacer(Modifier.width(Spacing.l))
                 Column(Modifier.weight(1f)) {
-                    Text(state.kind.uppercase(), style = NmTheme.type.caption, color = colors.textTertiary)
+                    Text(state.kind.uppercase(), style = NmTheme.type.dotCaption, color = colors.textTertiary)
                     Spacer(Modifier.height(Spacing.xs))
                     Text(
                         state.title,

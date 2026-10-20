@@ -113,7 +113,7 @@ fun NowPlayingScreen() {
         ) {
             NmIconButton(NmIcons.ChevronDown, "Close player", navigator::back)
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("NOW PLAYING", style = NmTheme.type.caption, color = colors.textTertiary)
+                Text("NOW PLAYING", style = NmTheme.type.dotCaption, color = colors.textTertiary)
                 if (playback.queue.size > 1 && playback.queuePosition >= 0) {
                     Text(
                         "${playback.queuePosition + 1} of ${playback.queue.size}",
@@ -243,9 +243,9 @@ fun NowPlayingScreen() {
                 onScrub = { scrubFraction = it },
             )
             Row(Modifier.fillMaxWidth()) {
-                Text(shownPosition.formatDuration(), style = NmTheme.type.caption, color = colors.textSecondary)
+                Text(shownPosition.formatDuration(), style = NmTheme.type.dotCaption, color = colors.textSecondary)
                 Spacer(Modifier.weight(1f))
-                Text(playback.durationMs.formatDuration(), style = NmTheme.type.caption, color = colors.textSecondary)
+                Text(playback.durationMs.formatDuration(), style = NmTheme.type.dotCaption, color = colors.textSecondary)
             }
 
             Spacer(Modifier.height(Spacing.l))

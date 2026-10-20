@@ -137,7 +137,7 @@ fun QueueScreen() {
                             Text(current.title, style = NmTheme.type.body, color = colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             Text(current.artist, style = NmTheme.type.caption, color = colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
-                        Text(playback.durationMs.formatDuration(), style = NmTheme.type.caption, color = colors.textTertiary)
+                        Text(playback.durationMs.formatDuration(), style = NmTheme.type.dotCaption, color = colors.textTertiary)
                     }
                     Spacer(Modifier.height(Spacing.m))
                 }
@@ -183,7 +183,7 @@ fun QueueScreen() {
                             Text(entry.song.title, style = NmTheme.type.body, color = colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             Text(entry.song.artist, style = NmTheme.type.caption, color = colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
-                        Text(entry.song.durationMs.formatDuration(), style = NmTheme.type.caption, color = colors.textTertiary)
+                        Text(entry.song.durationMs.formatDuration(), style = NmTheme.type.dotCaption, color = colors.textTertiary)
                         NmIconButton(NmIcons.Close, "Remove ${entry.song.title} from queue", { player.removeQueueItem(entry.index) }, tint = colors.textTertiary, iconSize = 16.dp)
                         if (reorderEnabled) {
                             Box(
