@@ -1,5 +1,10 @@
 package com.centimusic.player.ui.components
 
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -271,15 +276,15 @@ fun EmptyState(
 /** Dot-matrix style loading indicator: three dots pulsing in sequence. */
 @Composable
 fun DotLoader(modifier: Modifier = Modifier) {
-    val transition = androidx.compose.animation.core.rememberInfiniteTransition(label = "dots")
+    val transition = rememberInfiniteTransition(label = "dots")
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         repeat(3) { i ->
             val alpha = transition.animateFloat(
                 initialValue = 0.2f,
                 targetValue = 1f,
-                animationSpec = androidx.compose.animation.core.infiniteRepeatable(
-                    animation = androidx.compose.animation.core.tween(500, delayMillis = i * 160),
-                    repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(500, delayMillis = i * 160),
+                    repeatMode = RepeatMode.Reverse,
                 ),
                 label = "dot$i",
             )
