@@ -92,13 +92,7 @@ Accent `#FF3030` in both. Large headings use **Doto** (dot-matrix, SIL OFL 1.1 â
 
 ### App icon
 
-<img src="docs/icon.png" width="160" alt="CentiMusic app icon">
-
-The launcher icon is a black circuit-board device carrying a dot-matrix music note and a "C", on a
-**transparent background**: the adaptive icon's background layer is transparent, so only the device
-is drawn on the home screen. The foreground ships as PNGs for every density
-(`app/src/main/res/mipmap-*/ic_launcher_foreground.png`), sized to 58dp of the 108dp canvas so that no
-launcher mask shape clips it. `docs/icon.png` is a 512px transparent version.
-
-The launch screen and animated splash use a separate vector mark (`drawable/ic_centimusic_mark.xml`):
-an original dot-matrix equalizer of white dots with one red dot, which the splash animation is built from.
+The CentiMusic mark is an original dot-matrix equalizer: five columns of white dots rising from a
+common baseline on black, with the top dot of the tallest column in red. It ships as an adaptive
+vector icon with a monochrome layer for Android 13 themed icons, and the same mark is used for the
+launch screen and the notification icon.
