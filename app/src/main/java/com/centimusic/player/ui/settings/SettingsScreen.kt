@@ -1,6 +1,13 @@
 package com.centimusic.player.ui.settings
 
 import androidx.compose.animation.animateColorAsState
+import com.centimusic.player.R
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.border
+import androidx.compose.foundation.Image
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -254,13 +261,7 @@ fun SettingsScreen() {
                 "and stores playlists, likes, history and settings only on this device. The app has no internet " +
                 "permission, no accounts, no analytics and no ads.",
         ) { dialog = null }
-        SettingsDialog.About -> InfoDialog(
-            "About",
-            "CentiMusic\nVersion ${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})\n\n" +
-                "A minimalist offline music player, inspired by Nothing's design language, built with Jetpack Compose " +
-                "and Media3 ExoPlayer.\n\nDot-matrix type: Doto, © The Doto Project Authors (SIL Open Font License 1.1).\n\n" +
-                "CentiMusic is an independent project. It is not affiliated with, endorsed by or a product of Nothing Technology Ltd.",
-        ) { dialog = null }
+        SettingsDialog.About -> AboutDialog { dialog = null }
         null -> Unit
     }
 }
@@ -333,5 +334,51 @@ private fun InfoDialog(title: String, text: String, onDismiss: () -> Unit) {
         title = { Text(title, style = NmTheme.type.sectionTitle, color = colors.textPrimary) },
         text = { Text(text, style = NmTheme.type.body, color = colors.textSecondary) },
         confirmButton = { TextButton(onClick = onDismiss) { Text("Done", color = colors.accent) } },
+    )
+}
+
+@Composable
+private fun AboutDialog(onDismiss: () -> Unit) {
+    val colors = NmTheme.colors
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = colors.surface,
+        shape = RoundedCornerShape(24.dp),
+        text = {
+            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                Spacer(Modifier.height(Spacing.s))
+                Image(
+                    painter = painterResource(R.drawable.about_vincent),
+                    contentDescription = "Vincent, the maker of CentiMusic",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(132.dp)
+                        .border(2.dp, colors.accent, CircleShape)
+                        .padding(5.dp)
+                        .clip(CircleShape),
+                )
+                Spacer(Modifier.height(Spacing.l))
+                Text("CentiMusic", style = NmTheme.type.screenTitle.copy(fontSize = 28.sp), color = colors.textPrimary, textAlign = TextAlign.Center)
+                Spacer(Modifier.height(Spacing.xs))
+                Text(
+                    "Version ${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})",
+                    style = NmTheme.type.dotCaption,
+                    color = colors.textTertiary,
+                    textAlign = TextAlign.Center,
+                )
+                Spacer(Modifier.height(Spacing.l))
+                Text(
+                    "He build it because he is sad \uD83D\uDC94",
+                    style = NmTheme.type.body,
+                    color = colors.textSecondary,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        },
+        confirmButton = {
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                TextButton(onClick = onDismiss) { Text("Done", color = colors.accent) }
+            }
+        },
     )
 }
