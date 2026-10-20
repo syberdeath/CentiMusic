@@ -1,10 +1,11 @@
-# NOTHING MUSIC
+# CentiMusic
 
-A minimalist, fully offline Android music player: monochrome surfaces, dot-matrix type, geometric
+A minimalist, fully offline Android music player inspired by Nothing's design language: monochrome surfaces, dot-matrix type, geometric
 artwork and a single red accent. It plays the music already on your phone. There are no accounts,
 no streaming and no network permission.
 
-> NOTHING MUSIC is an independent project. It is not affiliated with or endorsed by Nothing Technology Ltd.
+> CentiMusic is an independent project. It is not affiliated with, endorsed by or a product of Nothing Technology Ltd.,
+> and it does not use Nothing's logos.
 
 ## Features
 
@@ -34,7 +35,7 @@ drag-and-drop · Gradle Kotlin DSL with a version catalog.
 
 ```
 app/src/main/java/com/centimusic/player/
-├── NothingMusicApp.kt, AppContainer.kt, MainActivity.kt   app layer, manual DI
+├── CentiMusicApp.kt, AppContainer.kt, MainActivity.kt   app layer, manual DI
 ├── data/
 │   ├── media/        Song/Album/Artist/Folder models, MediaStore scanner, artwork loader, MusicRepository
 │   ├── database/     Room entities, DAOs, AppDatabase
@@ -67,7 +68,7 @@ If the SDK isn't auto-detected, create `local.properties` with `sdk.dir=/path/to
 ### CI
 
 `.github/workflows/android.yml` builds the debug APK and runs the unit tests on every push. The APK
-is attached to each run as the **nothing-music-debug-apk** artifact.
+is attached to each run as the **centimusic-debug-apk** artifact.
 
 ## Permissions
 
@@ -86,5 +87,11 @@ Dark: background `#080808`, text `#FFFFFF` / `#A0A0A0`, dividers `#252525`.
 Light: background `#FAFAF8`, text `#111111` / `#686868`, dividers `#E5E5E2`.
 Accent `#FF3030` in both. Large headings use **Doto** (dot-matrix, SIL OFL 1.1 — see
 `licenses/Doto-OFL.txt`); metadata uses the system sans-serif. Icons are custom vectors drawn on a
-24-unit grid with one 1.6 stroke weight. The launcher icon is an adaptive vector (black square,
-white equalizer bars, red dot) with a monochrome layer for themed icons.
+24-unit grid with one 1.6 stroke weight.
+
+### App icon
+
+The CentiMusic mark is an original dot-matrix equalizer: five columns of white dots rising from a
+common baseline on black, with the top dot of the tallest column in red. It ships as an adaptive
+vector icon with a monochrome layer for Android 13 themed icons, and the same mark is used for the
+launch screen and the notification icon.

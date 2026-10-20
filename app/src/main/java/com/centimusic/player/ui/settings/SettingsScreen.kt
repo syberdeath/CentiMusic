@@ -210,7 +210,7 @@ fun SettingsScreen() {
                     .padding(vertical = Spacing.xxxl),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text("NOTHING MUSIC", style = NmTheme.type.brand, color = colors.textSecondary)
+                Text("CentiMusic", style = NmTheme.type.brand, color = colors.textSecondary)
                 Spacer(Modifier.height(Spacing.xs))
                 Text("Local music. A clearer mind.", style = NmTheme.type.caption, color = colors.textTertiary)
                 Spacer(Modifier.height(Spacing.m))
@@ -238,15 +238,16 @@ fun SettingsScreen() {
         )
         SettingsDialog.Privacy -> InfoDialog(
             "Privacy",
-            "NOTHING MUSIC works entirely offline. It reads audio files on this device to build your library, " +
+            "CentiMusic works entirely offline. It reads audio files on this device to build your library, " +
                 "and stores playlists, likes, history and settings only on this device. The app has no internet " +
                 "permission, no accounts, no analytics and no ads.",
         ) { dialog = null }
         SettingsDialog.About -> InfoDialog(
             "About",
-            "NOTHING MUSIC ${BuildConfig.VERSION_NAME}\n\nA minimalist offline music player built with Jetpack Compose " +
+            "CentiMusic\nVersion ${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})\n\n" +
+                "A minimalist offline music player, inspired by Nothing's design language, built with Jetpack Compose " +
                 "and Media3 ExoPlayer.\n\nDot-matrix type: Doto, © The Doto Project Authors (SIL Open Font License 1.1).\n\n" +
-                "An independent project, not affiliated with or endorsed by Nothing Technology Ltd.",
+                "CentiMusic is an independent project. It is not affiliated with, endorsed by or a product of Nothing Technology Ltd.",
         ) { dialog = null }
         null -> Unit
     }

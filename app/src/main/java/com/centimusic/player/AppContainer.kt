@@ -13,7 +13,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 
-/** Manual dependency container; one instance per process, owned by [NothingMusicApp]. */
+/** Manual dependency container; one instance per process, owned by [CentiMusicApp]. */
 class AppContainer(context: Context) {
     private val appContext = context.applicationContext
 

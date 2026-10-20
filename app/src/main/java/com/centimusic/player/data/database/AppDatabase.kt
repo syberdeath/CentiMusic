@@ -27,6 +27,7 @@ abstract class AppDatabase : RoomDatabase() {
 
     companion object {
         fun create(context: Context): AppDatabase =
+            // File name predates the CentiMusic rename; kept so existing installs keep their playlists.
             Room.databaseBuilder(context, AppDatabase::class.java, "nothing_music.db").build()
     }
 }

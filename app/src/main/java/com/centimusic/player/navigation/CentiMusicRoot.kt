@@ -73,14 +73,14 @@ import com.centimusic.player.ui.queue.QueueScreen
 import com.centimusic.player.ui.search.SearchScreen
 import com.centimusic.player.ui.settings.SettingsScreen
 import com.centimusic.player.ui.theme.NmTheme
-import com.centimusic.player.ui.theme.NothingMusicTheme
+import com.centimusic.player.ui.theme.CentiMusicTheme
 import com.centimusic.player.ui.theme.Spacing
 import kotlinx.coroutines.launch
 
 @Composable
-fun NothingMusicRoot(container: AppContainer) {
+fun CentiMusicRoot(container: AppContainer) {
     val prefs by container.preferences.preferences.collectAsStateWithLifecycle(initialValue = UserPreferences())
-    NothingMusicTheme(prefs.themeMode) {
+    CentiMusicTheme(prefs.themeMode) {
         val navController = rememberNavController()
         val navigator = remember(navController) { Navigator(navController) }
         val snackbar = remember { SnackbarHostState() }

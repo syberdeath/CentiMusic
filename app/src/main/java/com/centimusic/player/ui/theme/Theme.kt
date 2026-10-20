@@ -20,7 +20,7 @@ object NmTheme {
 }
 
 @Composable
-fun NothingMusicTheme(mode: ThemeMode, content: @Composable () -> Unit) {
+fun CentiMusicTheme(mode: ThemeMode, content: @Composable () -> Unit) {
     val dark = when (mode) {
         ThemeMode.SYSTEM -> isSystemInDarkTheme()
         ThemeMode.LIGHT -> false

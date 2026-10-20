@@ -15,7 +15,7 @@ import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import com.centimusic.player.MainActivity
-import com.centimusic.player.NothingMusicApp
+import com.centimusic.player.CentiMusicApp
 import com.centimusic.player.R
 import com.centimusic.player.data.preferences.ResumePoint
 import com.google.common.util.concurrent.Futures
@@ -40,7 +40,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 class PlaybackService : MediaSessionService() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-    private val container by lazy { (application as NothingMusicApp).container }
+    private val container by lazy { (application as CentiMusicApp).container }
 
     private lateinit var player: ExoPlayer
     private var session: MediaSession? = null

@@ -6,18 +6,18 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.lifecycleScope
-import com.centimusic.player.navigation.NothingMusicRoot
+import com.centimusic.player.navigation.CentiMusicRoot
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
-    private val container get() = (application as NothingMusicApp).container
+    private val container get() = (application as CentiMusicApp).container
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        setTheme(R.style.Theme_NothingMusic) // Replace the launch (splash) window background.
+        setTheme(R.style.Theme_CentiMusic) // Replace the launch (splash) window background.
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         if (savedInstanceState == null) handleViewIntent(intent)
-        setContent { NothingMusicRoot(container) }
+        setContent { CentiMusicRoot(container) }
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -30,7 +30,7 @@ class MainActivity : ComponentActivity() {
         container.music.refreshPermission()
     }
 
-    /** "Open with NOTHING MUSIC" from a file manager. */
+    /** "Open with CentiMusic" from a file manager. */
     private fun handleViewIntent(intent: Intent?) {
         val uri = intent?.data ?: return
         if (intent.action != Intent.ACTION_VIEW) return

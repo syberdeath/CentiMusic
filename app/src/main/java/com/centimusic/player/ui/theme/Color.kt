@@ -4,7 +4,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
-val NothingRed = Color(0xFFFF3030)
+val AccentRed = Color(0xFFFF3030)
 
 @Immutable
 data class NmColors(
@@ -33,7 +33,7 @@ val DarkNmColors = NmColors(
     textPrimary = Color(0xFFFFFFFF),
     textSecondary = Color(0xFFA0A0A0),
     textTertiary = Color(0xFF6B6B6B),
-    accent = NothingRed,
+    accent = AccentRed,
     onAccent = Color.White,
     divider = Color(0xFF252525),
     inverse = Color(0xFFFFFFFF),
@@ -48,7 +48,7 @@ val LightNmColors = NmColors(
     textPrimary = Color(0xFF111111),
     textSecondary = Color(0xFF686868),
     textTertiary = Color(0xFF9B9B97),
-    accent = NothingRed,
+    accent = AccentRed,
     onAccent = Color.White,
     divider = Color(0xFFE5E5E2),
     inverse = Color(0xFF111111),

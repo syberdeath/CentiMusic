@@ -65,7 +65,7 @@ fun HomeScreen() {
             !access.granted && state.songCount == 0 -> item(key = "permission") {
                 EmptyState(
                     title = "Your music, offline",
-                    message = "Allow access to audio on this device to build your library. Nothing leaves your phone.",
+                    message = "Allow access to audio on this device to build your library. Your music never leaves your phone.",
                     actionLabel = if (access.permanentlyDenied) "Open settings" else "Allow access",
                     onAction = access.request,
                     secondaryLabel = "Browse audio files",
@@ -151,7 +151,7 @@ private fun Hero(onSettings: () -> Unit) {
                 .padding(start = Spacing.gutter, end = Spacing.xs, top = Spacing.l),
             verticalAlignment = Alignment.Top,
         ) {
-            Text("NOTHING\nMUSIC", style = NmTheme.type.brand, color = colors.textPrimary, modifier = Modifier.weight(1f))
+            Text("CentiMusic", style = NmTheme.type.brand, color = colors.textPrimary, modifier = Modifier.weight(1f))
             NmIconButton(NmIcons.MoreVertical, "Settings", onSettings)
         }
         Column(
