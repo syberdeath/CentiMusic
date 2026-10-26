@@ -87,7 +87,7 @@ machine's own debug key.
 ### CI
 
 `.github/workflows/android.yml` builds the debug APK and runs the unit tests on every push. The APK
-is attached to each run as the **centimusic-debug-apk** artifact.
+is attached to each run as **CentiMusic.apk**, uploaded un-zipped so it installs straight from the download.
 
 ## Visualizer and the lock screen
 
