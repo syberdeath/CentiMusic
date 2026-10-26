@@ -5,6 +5,13 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+// Permanent signing key, provided by CI from GitHub secrets (see README → "Signing"). Without it
+// (local builds) Gradle falls back to the machine's own debug key.
+val ciKeystore: File? = System.getenv("CENTIMUSIC_KEYSTORE_FILE")?.let { File(it) }?.takeIf { it.exists() }
+val ciKeyPassword: String? = System.getenv("CENTIMUSIC_KEY_PASSWORD")
+// Every CI run gets a higher versionCode, so Android always treats a new APK as an update.
+val ciRunNumber: Int? = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull()
+
 android {
     namespace = "com.centimusic.player"
     compileSdk = 35
@@ -13,19 +20,33 @@ android {
         applicationId = "com.centimusic.player"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = ciRunNumber ?: 1
+        versionName = "1.0.${ciRunNumber ?: 0}"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
     }
 
+    signingConfigs {
+        if (ciKeystore != null && ciKeyPassword != null) {
+            create("centimusic") {
+                storeFile = ciKeystore
+                storePassword = ciKeyPassword
+                keyAlias = "centimusic"
+                keyPassword = ciKeyPassword
+            }
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfigs.findByName("centimusic")?.let { signingConfig = it }
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // Signed with the debug key so the release build is installable out of the box.
-            signingConfig = signingConfigs.getByName("debug")
+            // Same permanent key as debug builds when available, so either can update the other.
+            signingConfig = signingConfigs.findByName("centimusic") ?: signingConfigs.getByName("debug")
         }
     }
 

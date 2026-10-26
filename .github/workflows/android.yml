@@ -20,6 +20,21 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
+      # A fixed signing key lets each new APK install as an update over the previous one.
+      - name: Restore signing key
+        if: github.event_name != 'pull_request'
+        env:
+          KEYSTORE_B64: ${{ secrets.CENTIMUSIC_KEYSTORE }}
+          KEY_PASSWORD: ${{ secrets.CENTIMUSIC_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ] || [ -z "$KEY_PASSWORD" ]; then
+            echo "::error title=Signing key missing::Add the CENTIMUSIC_KEYSTORE and CENTIMUSIC_KEY_PASSWORD repository secrets (Settings → Secrets and variables → Actions). See README → Signing."
+            exit 1
+          fi
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/centimusic.jks"
+          echo "CENTIMUSIC_KEYSTORE_FILE=$RUNNER_TEMP/centimusic.jks" >> "$GITHUB_ENV"
+          echo "CENTIMUSIC_KEY_PASSWORD=$KEY_PASSWORD" >> "$GITHUB_ENV"
+
       - name: Build debug APK and run unit tests
         run: ./gradlew --no-daemon --stacktrace assembleDebug testDebugUnitTest
 

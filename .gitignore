@@ -9,3 +9,7 @@
 .externalNativeBuild
 .cxx
 .kotlin/
+
+# Signing keys never belong in the repo (CI gets them from secrets).
+*.jks
+*.keystore

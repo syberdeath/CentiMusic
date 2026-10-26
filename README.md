@@ -68,6 +68,22 @@ Requirements: JDK 17+ and the Android SDK (platform 35). Android Studio Ladybug 
 
 If the SDK isn't auto-detected, create `local.properties` with `sdk.dir=/path/to/Android/sdk`.
 
+### Signing (install updates without uninstalling)
+
+Android only installs an APK over an existing app when both are signed with the same key. CI signs
+every build with one permanent key stored in two repository secrets (Settings → Secrets and variables
+→ Actions):
+
+| Secret | Value |
+| --- | --- |
+| `CENTIMUSIC_KEYSTORE` | The PKCS12 keystore, base64-encoded (alias `centimusic`) |
+| `CENTIMUSIC_KEY_PASSWORD` | Its password (store and key) |
+
+Each CI run also gets a higher `versionCode` (the run number), so new APKs install as updates and keep
+your library, playlists and settings. Keep a private backup of the keystore: losing it means users
+must uninstall once to switch to a new key. Builds without the secrets (local or pull requests) use the
+machine's own debug key.
+
 ### CI
 
 `.github/workflows/android.yml` builds the debug APK and runs the unit tests on every push. The APK
