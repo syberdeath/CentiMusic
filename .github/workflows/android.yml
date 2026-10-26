@@ -22,18 +22,20 @@ jobs:
 
       # A fixed signing key lets each new APK install as an update over the previous one.
       - name: Restore signing key
-        if: github.event_name != 'pull_request'
+        id: signing
         env:
           KEYSTORE_B64: ${{ secrets.CENTIMUSIC_KEYSTORE }}
           KEY_PASSWORD: ${{ secrets.CENTIMUSIC_KEY_PASSWORD }}
         run: |
           if [ -z "$KEYSTORE_B64" ] || [ -z "$KEY_PASSWORD" ]; then
-            echo "::error title=Signing key missing::Add the CENTIMUSIC_KEYSTORE and CENTIMUSIC_KEY_PASSWORD repository secrets (Settings → Secrets and variables → Actions). See README → Signing."
-            exit 1
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Signing secrets not set; building with a throwaway key to check the code."
+            exit 0
           fi
           echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/centimusic.jks"
           echo "CENTIMUSIC_KEYSTORE_FILE=$RUNNER_TEMP/centimusic.jks" >> "$GITHUB_ENV"
           echo "CENTIMUSIC_KEY_PASSWORD=$KEY_PASSWORD" >> "$GITHUB_ENV"
+          echo "present=true" >> "$GITHUB_OUTPUT"
 
       - name: Build debug APK and run unit tests
         run: ./gradlew --no-daemon --stacktrace assembleDebug testDebugUnitTest
@@ -43,11 +45,20 @@ jobs:
         continue-on-error: true
 
       - name: Upload APK
+        if: steps.signing.outputs.present == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: centimusic-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
+      # The code compiled and tests ran above; without the permanent key the APK couldn't update an
+      # installed CentiMusic, so don't publish it.
+      - name: Require signing key
+        if: steps.signing.outputs.present != 'true' && github.event_name != 'pull_request'
+        run: |
+          echo "::error title=Signing key missing::Add the CENTIMUSIC_KEYSTORE and CENTIMUSIC_KEY_PASSWORD repository secrets (Settings → Secrets and variables → Actions). See README → Signing."
+          exit 1
 
       - name: Upload reports
         if: always()
