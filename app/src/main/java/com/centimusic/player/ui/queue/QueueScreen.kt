@@ -40,6 +40,7 @@ import com.centimusic.player.navigation.LocalAppContainer
 import com.centimusic.player.navigation.LocalNavigator
 import com.centimusic.player.playback.QueueEntry
 import com.centimusic.player.ui.components.Artwork
+import com.centimusic.player.ui.components.MarqueeText
 import com.centimusic.player.ui.components.ConfirmDialog
 import com.centimusic.player.ui.components.EmptyState
 import com.centimusic.player.ui.components.NmIconButton
@@ -134,7 +135,7 @@ fun QueueScreen() {
                         }
                         Spacer(Modifier.width(Spacing.m))
                         Column(Modifier.weight(1f)) {
-                            Text(current.title, style = NmTheme.type.body, color = colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            MarqueeText(current.title, style = NmTheme.type.body, color = colors.textPrimary)
                             Text(current.artist, style = NmTheme.type.caption, color = colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                         Text(playback.durationMs.formatDuration(), style = NmTheme.type.dotCaption, color = colors.textTertiary)
@@ -180,7 +181,7 @@ fun QueueScreen() {
                         Artwork(entry.song, Modifier.size(44.dp), corner = Spacing.thumbCorner, sizeHint = 48.dp)
                         Spacer(Modifier.width(Spacing.m))
                         Column(Modifier.weight(1f)) {
-                            Text(entry.song.title, style = NmTheme.type.body, color = colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            MarqueeText(entry.song.title, style = NmTheme.type.body, color = colors.textPrimary)
                             Text(entry.song.artist, style = NmTheme.type.caption, color = colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                         Text(entry.song.durationMs.formatDuration(), style = NmTheme.type.dotCaption, color = colors.textTertiary)

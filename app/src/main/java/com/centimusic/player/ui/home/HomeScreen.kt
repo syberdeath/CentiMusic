@@ -3,6 +3,7 @@ package com.centimusic.player.ui.home
 import androidx.compose.foundation.background
 import com.centimusic.player.ui.components.rememberHaptics
 import com.centimusic.player.ui.components.Artwork
+import com.centimusic.player.ui.components.MarqueeText
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.semantics.Role
@@ -276,7 +277,7 @@ private fun ContinueCard(song: Song, isPlaying: Boolean, onOpen: () -> Unit, onP
         Column(Modifier.weight(1f)) {
             Text(if (isPlaying) "NOW PLAYING" else "CONTINUE LISTENING", style = NmTheme.type.dotCaption, color = colors.accent)
             Spacer(Modifier.height(2.dp))
-            Text(song.title, style = NmTheme.type.title, color = colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            MarqueeText(song.title, style = NmTheme.type.title, color = colors.textPrimary)
             Text(song.artist, style = NmTheme.type.caption, color = colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         Box(

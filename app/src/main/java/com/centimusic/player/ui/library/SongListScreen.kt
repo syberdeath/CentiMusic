@@ -1,6 +1,8 @@
 package com.centimusic.player.ui.library
 
 import androidx.compose.foundation.background
+import com.centimusic.player.ui.components.MarqueeText
+import androidx.compose.foundation.layout.fillMaxHeight
 import kotlinx.coroutines.launch
 import com.centimusic.player.ui.components.rememberHaptics
 import com.centimusic.player.ui.components.PillButton
@@ -158,7 +160,7 @@ fun SongListScreen(source: SongListSource) {
                         } else {
                             null
                         },
-                        modifier = Modifier.padding(end = if (letterIndex != null && !selecting) 18.dp else 0.dp),
+                        modifier = Modifier.padding(end = if (letterIndex != null && !selecting) 26.dp else 0.dp),
                     )
                 }
             }
@@ -172,7 +174,9 @@ fun SongListScreen(source: SongListSource) {
                 },
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .padding(bottom = LocalChromePadding.current),
+                    .fillMaxHeight()
+                    .statusBarsPadding()
+                    .padding(top = 56.dp, bottom = LocalChromePadding.current + Spacing.s),
             )
         }
 
@@ -275,40 +279,38 @@ private fun SelectionBar(
     }
 }
 
-/** Slim A–Z strip on the right edge; drag or tap to jump, with a dot-matrix letter bubble. */
+private val ALPHABET = listOf('#') + ('A'..'Z').toList()
+
+/**
+ * Full-height # + A–Z strip on the right edge; drag or tap to jump, with a big dot-matrix letter
+ * bubble. Letters without songs are dimmed and jump to the next letter that has some.
+ */
 @Composable
 private fun AlphabetScroller(letters: List<Char>, onLetter: (Char) -> Unit, modifier: Modifier = Modifier) {
     val colors = NmTheme.colors
     val haptics = rememberHaptics()
+    val available = remember(letters) { letters.toSet() }
     var active by remember { mutableStateOf<Char?>(null) }
     var heightPx by remember { mutableIntStateOf(1) }
     fun pick(y: Float) {
-        val i = ((y / heightPx) * letters.size).toInt().coerceIn(0, letters.lastIndex)
-        val letter = letters[i]
+        val i = ((y / heightPx) * ALPHABET.size).toInt().coerceIn(0, ALPHABET.lastIndex)
+        val letter = ALPHABET[i]
         if (letter != active) {
             active = letter
             haptics.gesture()
-            onLetter(letter)
+            // Jump to this letter, or the next one that has songs (or the last one if none follow).
+            val target = ALPHABET.drop(i).firstOrNull { it in available } ?: letters.lastOrNull()
+            target?.let(onLetter)
         }
     }
-    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
-        active?.let { letter ->
-            Box(
-                Modifier
-                    .size(56.dp)
-                    .clip(CircleShape)
-                    .background(colors.accent),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(letter.toString(), style = NmTheme.type.screenTitle, color = colors.onAccent)
-            }
-            Spacer(Modifier.width(Spacing.m))
-        }
+    Box(modifier) {
         Column(
             Modifier
-                .width(20.dp)
+                .fillMaxHeight()
+                .width(30.dp)
+                .align(Alignment.CenterEnd)
                 .onSizeChanged { heightPx = it.height.coerceAtLeast(1) }
-                .pointerInput(letters) {
+                .pointerInput(Unit) {
                     detectTapGestures(
                         onPress = { offset ->
                             pick(offset.y)
@@ -317,7 +319,7 @@ private fun AlphabetScroller(letters: List<Char>, onLetter: (Char) -> Unit, modi
                         },
                     )
                 }
-                .pointerInput(letters) {
+                .pointerInput(Unit) {
                     detectVerticalDragGestures(
                         onDragStart = { pick(it.y) },
                         onDragEnd = { active = null },
@@ -328,13 +330,31 @@ private fun AlphabetScroller(letters: List<Char>, onLetter: (Char) -> Unit, modi
                     }
                 },
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceEvenly,
         ) {
-            letters.forEach { letter ->
+            ALPHABET.forEach { letter ->
                 Text(
                     letter.toString(),
-                    style = NmTheme.type.dotCaption.copy(fontSize = 10.sp, lineHeight = 13.sp),
-                    color = if (letter == active) colors.accent else colors.textSecondary,
+                    style = NmTheme.type.dotCaption.copy(fontSize = 13.sp, lineHeight = 14.sp),
+                    color = when {
+                        letter == active -> colors.accent
+                        letter in available -> colors.textPrimary
+                        else -> colors.textTertiary.copy(alpha = 0.5f)
+                    },
                 )
+            }
+        }
+        active?.let { letter ->
+            Box(
+                Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 48.dp)
+                    .size(72.dp)
+                    .clip(CircleShape)
+                    .background(colors.accent),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(letter.toString(), style = NmTheme.type.screenTitle.copy(fontSize = 40.sp, lineHeight = 44.sp), color = colors.onAccent)
             }
         }
     }
