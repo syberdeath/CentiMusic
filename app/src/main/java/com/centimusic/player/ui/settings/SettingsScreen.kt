@@ -48,6 +48,7 @@ import com.centimusic.player.AppContainer
 import com.centimusic.player.BuildConfig
 import com.centimusic.player.data.media.ScanState
 import com.centimusic.player.data.preferences.ThemeMode
+import com.centimusic.player.data.preferences.PulseStyle
 import com.centimusic.player.data.preferences.UserPreferences
 import com.centimusic.player.navigation.LocalAppContainer
 import com.centimusic.player.navigation.LocalChromePadding
@@ -100,6 +101,9 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     }
     fun setSkipSilence(v: Boolean) {
         viewModelScope.launch { prefs.setSkipSilence(v) }
+    }
+    fun setPulseStyle(style: PulseStyle) {
+        viewModelScope.launch { prefs.setPulseStyle(style) }
     }
     fun setHideDuplicates(v: Boolean) {
         viewModelScope.launch { prefs.setHideDuplicates(v) }
@@ -168,6 +172,16 @@ fun SettingsScreen() {
         item { GroupLabel("Appearance") }
         item {
             NavigationRow(NmIcons.Appearance, "Theme", { dialog = SettingsDialog.Theme }, value = prefs.themeMode.label, iconSize = 40.dp)
+        }
+        item {
+            NavigationRow(
+                NmIcons.Waveform,
+                "Pulse style",
+                { dialog = SettingsDialog.Pulse },
+                subtitle = "Tip: double-tap the artwork in Now Playing to switch",
+                value = prefs.pulseStyle.label,
+                iconSize = 40.dp,
+            )
         }
 
         item { GroupLabel("Playback") }
@@ -267,6 +281,17 @@ fun SettingsScreen() {
             },
             onDismiss = { dialog = null },
         )
+        SettingsDialog.Pulse -> ChoiceDialog(
+            title = "Pulse style",
+            options = PulseStyle.entries,
+            selected = prefs.pulseStyle,
+            label = { "${it.label} — ${it.description}" },
+            onSelect = {
+                vm.setPulseStyle(it)
+                dialog = null
+            },
+            onDismiss = { dialog = null },
+        )
         SettingsDialog.Privacy -> InfoDialog(
             "Privacy",
             "CentiMusic works entirely offline. It reads audio files on this device to build your library, " +
@@ -278,7 +303,7 @@ fun SettingsScreen() {
     }
 }
 
-private enum class SettingsDialog { Theme, Privacy, About }
+private enum class SettingsDialog { Theme, Pulse, Privacy, About }
 
 @Composable
 private fun GroupLabel(text: String) {

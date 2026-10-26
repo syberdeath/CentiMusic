@@ -60,6 +60,10 @@ import com.centimusic.player.ui.components.rememberHaptics
 import com.centimusic.player.ui.visualizer.DotProgress
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.runtime.rememberUpdatedState
+import com.centimusic.player.data.preferences.UserPreferences
+import com.centimusic.player.navigation.LocalMessenger
 import androidx.compose.ui.input.pointer.pointerInput
 import com.centimusic.player.ui.pulse.PulseHalo
 import com.centimusic.player.ui.pulse.rememberArtworkPulse
@@ -89,6 +93,9 @@ fun NowPlayingScreen() {
 
     val motion = rememberArtworkMotion(playing = playback.isPlaying)
     val haptics = rememberHaptics()
+    val message = LocalMessenger.current
+    val prefs by container.preferences.preferences.collectAsStateWithLifecycle(initialValue = UserPreferences())
+    val currentPulseStyle by rememberUpdatedState(prefs.pulseStyle)
     val swipeX = remember { Animatable(0f) }
     val swipeY = remember { Animatable(0f) }
     val pulse = rememberArtworkPulse(playing = playback.isPlaying, trackKey = playback.current?.id, historySize = 72)
@@ -142,6 +149,17 @@ fun NowPlayingScreen() {
                 .weight(1f)
                 .fillMaxWidth()
                 .padding(horizontal = Spacing.s, vertical = Spacing.s)
+                // Double-tap the artwork to try the next pulse style.
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onDoubleTap = {
+                            val next = currentPulseStyle.next()
+                            haptics.confirm()
+                            scope.launch { container.preferences.setPulseStyle(next) }
+                            message("Pulse: ${next.label}")
+                        },
+                    )
+                }
                 // Swipe the artwork: left/right to change track, down to close the player.
                 .pointerInput(Unit) {
                     val threshold = 72.dp.toPx()
@@ -185,7 +203,8 @@ fun NowPlayingScreen() {
                 PulseHalo(
                     pulse = pulse,
                     artworkFraction = ARTWORK_FRACTION,
-                    rotationDeg = { motion.phase * 3f },
+                    timeSec = { motion.phase },
+                    style = prefs.pulseStyle,
                     modifier = Modifier.fillMaxSize(),
                     dotColor = colors.textPrimary,
                     accent = colors.accent,
