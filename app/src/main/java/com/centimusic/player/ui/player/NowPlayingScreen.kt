@@ -66,6 +66,7 @@ import com.centimusic.player.data.preferences.UserPreferences
 import com.centimusic.player.navigation.LocalMessenger
 import androidx.compose.ui.input.pointer.pointerInput
 import com.centimusic.player.ui.pulse.PulseHalo
+import com.centimusic.player.ui.pulse.PulsePickerSheet
 import com.centimusic.player.ui.pulse.rememberArtworkPulse
 import com.centimusic.player.ui.components.NmIconButton
 import com.centimusic.player.ui.theme.NmIcons
@@ -96,6 +97,7 @@ fun NowPlayingScreen() {
     val message = LocalMessenger.current
     val prefs by container.preferences.preferences.collectAsStateWithLifecycle(initialValue = UserPreferences())
     val currentPulseStyle by rememberUpdatedState(prefs.pulseStyle)
+    var showPulsePicker by remember { mutableStateOf(false) }
     val swipeX = remember { Animatable(0f) }
     val swipeY = remember { Animatable(0f) }
     val pulse = rememberArtworkPulse(playing = playback.isPlaying, trackKey = playback.current?.id, historySize = 72)
@@ -139,6 +141,7 @@ fun NowPlayingScreen() {
                     )
                 }
             }
+            NmIconButton(NmIcons.Pulse, "Pulse style", { showPulsePicker = true })
             NmIconButton(NmIcons.Waveform, "Open visualizer", navigator::visualizer)
             NmIconButton(NmIcons.MoreVertical, "More options", { menu.open(song) })
         }
@@ -361,6 +364,20 @@ fun NowPlayingScreen() {
                 NmIconButton(NmIcons.Queue, "Queue", navigator::queue, iconSize = 22.dp)
             }
         }
+    }
+
+    if (showPulsePicker) {
+        PulsePickerSheet(
+            current = prefs.pulseStyle,
+            song = song,
+            pulse = pulse,
+            timeSec = { motion.phase },
+            onSelect = {
+                haptics.confirm()
+                scope.launch { container.preferences.setPulseStyle(it) }
+            },
+            onDismiss = { showPulsePicker = false },
+        )
     }
 }
 

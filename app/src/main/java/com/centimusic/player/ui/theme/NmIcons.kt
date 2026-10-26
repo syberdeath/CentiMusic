@@ -378,5 +378,21 @@ object NmIcons {
         }
     }
 
+    /** Artwork circle inside a pulse ring. */
+    val Pulse by lazy {
+        icon("Pulse") {
+            fill { circle(12f, 12f, 3.2f) }
+            stroke { circle(12f, 12f, 6.6f) }
+            stroke(1.4f) {
+                moveTo(12f, 2.4f)
+                arcTo(9.6f, 9.6f, 0f, isMoreThanHalf = false, isPositiveArc = true, x1 = 21.6f, y1 = 12f)
+            }
+            stroke(1.4f) {
+                moveTo(12f, 21.6f)
+                arcTo(9.6f, 9.6f, 0f, isMoreThanHalf = false, isPositiveArc = true, x1 = 2.4f, y1 = 12f)
+            }
+        }
+    }
+
     val Minus by lazy { icon("Minus") { stroke { moveTo(6f, 12f); lineTo(18f, 12f) } } }
 }

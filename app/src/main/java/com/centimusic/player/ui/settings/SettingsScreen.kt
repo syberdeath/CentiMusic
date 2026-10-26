@@ -285,7 +285,7 @@ fun SettingsScreen() {
             title = "Pulse style",
             options = PulseStyle.entries,
             selected = prefs.pulseStyle,
-            label = { "${it.label} — ${it.description}" },
+            label = { it.label },
             onSelect = {
                 vm.setPulseStyle(it)
                 dialog = null

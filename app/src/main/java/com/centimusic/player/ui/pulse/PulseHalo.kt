@@ -4,14 +4,13 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import kotlin.math.PI
 import kotlin.math.cos
-import kotlin.math.pow
 import kotlin.math.sin
 import com.centimusic.player.data.preferences.PulseStyle
 
@@ -45,11 +44,10 @@ fun PulseHalo(
         if (g.activity <= 0.001f) return@Canvas
         when (style) {
             PulseStyle.HALO -> halo(g, dotColor, accent)
-            PulseStyle.RIPPLE -> ripple(g, dotColor, accent)
-            PulseStyle.SUNBURST -> sunburst(g, dotColor, accent)
-            PulseStyle.ORBIT -> orbit(g, dotColor, accent)
-            PulseStyle.GLOW -> glow(g, dotColor, accent)
-            PulseStyle.MINIMAL -> ring(g, accent)
+            PulseStyle.GLYPH -> glyph(g, dotColor, accent)
+            PulseStyle.DOT_RING -> dotRing(g, dotColor, accent)
+            PulseStyle.ECHO -> echo(g, dotColor, accent)
+            PulseStyle.MATRIX -> matrix(g, dotColor, accent)
         }
     }
 }
@@ -104,78 +102,79 @@ private fun DrawScope.halo(g: Geometry, dotColor: Color, accent: Color) {
     }
 }
 
-private fun DrawScope.ripple(g: Geometry, dotColor: Color, accent: Color) {
-    val waves = 4
-    for (w in 0 until waves) {
-        val t = ((g.time * 0.45f + w.toFloat() / waves) % 1f + 1f) % 1f
-        val fade = (1f - t).pow(1.5f)
-        drawCircle(
-            if (w == 0) accent else dotColor,
-            radius = g.bandStart + (g.bandEnd - g.bandStart) * t,
-            center = center,
-            alpha = g.activity * fade * (0.18f + 0.6f * g.level),
-            style = Stroke(width = (1f + 2.5f * g.level * (1f - t)) * density),
+/** Nothing Glyph-style: 16 arc segments that light up with the loudness of their slice. */
+private fun DrawScope.glyph(g: Geometry, dotColor: Color, accent: Color) {
+    val n = 16
+    val r = g.artHalf * 1.13f
+    val gapDeg = 7f
+    val sweep = 360f / n - gapDeg
+    for (i in 0 until n) {
+        var sum = 0f
+        val slots = 4
+        for (k in 0 until slots) sum += g.value(i * slots + k, n * slots)
+        val v = sum / slots
+        val startDeg = -90f - 180f / n + gapDeg / 2f + i * 360f / n
+        drawArc(
+            color = if (i == 0) accent else dotColor,
+            startAngle = startDeg,
+            sweepAngle = sweep,
+            useCenter = false,
+            topLeft = Offset(center.x - r, center.y - r),
+            size = Size(r * 2f, r * 2f),
+            alpha = g.activity * (0.12f + 0.88f * v),
+            style = Stroke(width = (3f + 2f * v) * density, cap = StrokeCap.Round),
         )
     }
-    ring(g, accent)
 }
 
-private fun DrawScope.sunburst(g: Geometry, dotColor: Color, accent: Color) {
-    val n = 96
-    val band = g.bandEnd - g.bandStart
-    val width = (2f * PI.toFloat() * g.bandStart / n * 0.45f).coerceIn(1.5f * density, 3.5f * density)
+/** A single ring of dots; each dot's size and brightness follow the loudness at its angle. */
+private fun DrawScope.dotRing(g: Geometry, dotColor: Color, accent: Color) {
+    val n = 60
+    val r = g.artHalf * 1.15f
     for (i in 0 until n) {
         val a = angle(i, n)
         val v = g.value(i, n)
-        val inner = g.bandStart
-        val outer = inner + band * (0.08f + 0.92f * v)
-        drawLine(
+        drawCircle(
             if (i == 0) accent else dotColor,
-            start = Offset(center.x + cos(a) * inner, center.y + sin(a) * inner),
-            end = Offset(center.x + cos(a) * outer, center.y + sin(a) * outer),
-            strokeWidth = width,
-            cap = StrokeCap.Round,
-            alpha = g.activity * (0.25f + 0.7f * v),
+            radius = (1.2f + 2.6f * v) * density * if (i == 0) 1.3f else 1f,
+            center = Offset(center.x + cos(a) * r, center.y + sin(a) * r),
+            alpha = g.activity * (0.3f + 0.7f * v),
         )
     }
 }
 
-private fun DrawScope.orbit(g: Geometry, dotColor: Color, accent: Color) {
-    val rings = 3
-    val band = g.bandEnd - g.bandStart
-    for (k in 0 until rings) {
-        val n = 36 + k * 12
-        val baseR = g.bandStart + band * (0.2f + 0.3f * k)
-        val dir = if (k % 2 == 0) 1f else -1f
-        val rot = dir * g.time * (12f + 8f * k) * (PI / 180.0).toFloat()
-        val dotR = (1.4f + 0.5f * k) * density
-        for (i in 0 until n) {
-            val a = angle(i, n, rot)
-            val v = g.value(i, n)
-            val r = baseR + band * 0.08f * v
-            val leader = k == rings - 1 && i == 0
-            drawCircle(
-                if (leader) accent else dotColor,
-                radius = if (leader) dotR * 1.8f else dotR,
-                center = Offset(center.x + cos(a) * r, center.y + sin(a) * r),
-                alpha = g.activity * if (leader) 1f else (0.12f + 0.8f * v),
-            )
-        }
+/** Three thin concentric rings that spread a little with loudness; the inner one is red. */
+private fun DrawScope.echo(g: Geometry, dotColor: Color, accent: Color) {
+    val rings = listOf(1.05f to 0.9f, 1.13f to 0.5f, 1.21f to 0.25f)
+    rings.forEachIndexed { k, (base, strength) ->
+        drawCircle(
+            if (k == 0) accent else dotColor,
+            radius = g.artHalf * (base + 0.035f * (k + 1) * g.level),
+            center = center,
+            alpha = g.activity * strength * (0.4f + 0.6f * g.level),
+            style = Stroke(width = (if (k == 0) 1.8f else 1.4f) * density),
+        )
     }
 }
 
-private fun DrawScope.glow(g: Geometry, dotColor: Color, accent: Color) {
-    val outer = g.artHalf + (g.half - g.artHalf) * (0.55f + 0.45f * g.level)
-    drawCircle(
-        Brush.radialGradient(
-            0f to accent.copy(alpha = 0f),
-            g.artHalf / outer to accent.copy(alpha = 0.55f * g.activity * (0.3f + 0.7f * g.level)),
-            1f to accent.copy(alpha = 0f),
-            center = center,
-            radius = outer,
-        ),
-        radius = outer,
-        center = center,
-    )
-    drawCircle(dotColor, radius = g.artHalf * 1.03f, center = center, alpha = g.activity * 0.35f, style = Stroke(width = 1f * density))
+/** Square dot lattice around the artwork, lit outward by the loudness at each angle. */
+private fun DrawScope.matrix(g: Geometry, dotColor: Color, accent: Color) {
+    val step = 7f * density
+    val dot = 1.5f * density
+    val r0 = g.artHalf * 1.07f
+    val r1 = g.bandEnd
+    val n = (r1 / step).toInt() + 1
+    for (gx in -n..n) {
+        for (gy in -n..n) {
+            val x = gx * step
+            val y = gy * step
+            val r = kotlin.math.sqrt(x * x + y * y)
+            if (r < r0 || r > r1) continue
+            val a = (kotlin.math.atan2(y, x) + PI.toFloat() / 2f + 2f * PI.toFloat()) % (2f * PI.toFloat())
+            val slot = (a / (2f * PI.toFloat()) * 72).toInt().coerceIn(0, 71)
+            val v = g.value(slot, 72)
+            val on = (r - r0) / (r1 - r0) < v
+            drawCircle(dotColor, radius = dot, center = Offset(center.x + x, center.y + y), alpha = g.activity * if (on) 0.85f else 0.08f)
+        }
+    }
 }
