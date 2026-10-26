@@ -26,6 +26,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -98,6 +99,7 @@ fun PillButton(
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
     filled: Boolean = false,
+    trailingIcon: ImageVector? = null,
 ) {
     val colors = NmTheme.colors
     val shape = RoundedCornerShape(50)
@@ -117,6 +119,10 @@ fun PillButton(
             Spacer(Modifier.width(Spacing.s))
         }
         Text(text, style = NmTheme.type.label, color = content)
+        if (trailingIcon != null) {
+            Spacer(Modifier.width(Spacing.xs))
+            Icon(trailingIcon, contentDescription = null, tint = content, modifier = Modifier.size(16.dp))
+        }
     }
 }
 
@@ -273,27 +279,36 @@ fun EmptyState(
     }
 }
 
-/** Dot-matrix style loading indicator: three dots pulsing in sequence. */
+/** Dot-matrix "listening" loader: a 5×5 grid of dots bouncing like a tiny equalizer. Purely decorative. */
 @Composable
 fun DotLoader(modifier: Modifier = Modifier) {
-    val transition = rememberInfiniteTransition(label = "dots")
-    Row(modifier, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        repeat(3) { i ->
-            val alpha = transition.animateFloat(
-                initialValue = 0.2f,
-                targetValue = 1f,
-                animationSpec = infiniteRepeatable(
-                    animation = tween(500, delayMillis = i * 160),
-                    repeatMode = RepeatMode.Reverse,
-                ),
-                label = "dot$i",
-            )
-            Box(
-                Modifier
-                    .size(7.dp)
-                    .clip(CircleShape)
-                    .background(NmTheme.colors.textPrimary.copy(alpha = alpha.value)),
-            )
+    val color = NmTheme.colors.textPrimary
+    val accent = NmTheme.colors.accent
+    val phase by rememberInfiniteTransition(label = "loader").animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(1_100, easing = androidx.compose.animation.core.LinearEasing)),
+        label = "phase",
+    )
+    androidx.compose.foundation.Canvas(modifier.size(width = 40.dp, height = 28.dp)) {
+        val cols = 5
+        val rows = 5
+        val sx = size.width / cols
+        val sy = size.height / rows
+        val r = minOf(sx, sy) * 0.3f
+        for (c in 0 until cols) {
+            val wave = 0.5f + 0.5f * kotlin.math.sin(2f * kotlin.math.PI.toFloat() * (phase + c * 0.19f))
+            val lit = 1 + (wave * (rows - 1)).toInt()
+            for (row in 0 until rows) {
+                val on = row < lit
+                val top = row == lit - 1 && c == 2
+                drawCircle(
+                    if (top) accent else color,
+                    radius = r,
+                    center = androidx.compose.ui.geometry.Offset(sx * (c + 0.5f), size.height - sy * (row + 0.5f)),
+                    alpha = if (on) 0.95f else 0.12f,
+                )
+            }
         }
     }
 }

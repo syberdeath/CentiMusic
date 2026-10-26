@@ -5,6 +5,14 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import kotlinx.coroutines.launch
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.Canvas
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -49,6 +57,9 @@ fun MiniPlayer(
     val position by remember(player) { player.positionTicker(500) }.collectAsStateWithLifecycle(0L)
     val pulse = rememberArtworkPulse(playing = state.isPlaying, trackKey = song.id)
     val progress = if (state.durationMs > 0) (position.toFloat() / state.durationMs).coerceIn(0f, 1f) else 0f
+    val haptics = rememberHaptics()
+    val scope = rememberCoroutineScope()
+    val swipe = remember { Animatable(0f) }
 
     Column(modifier.background(colors.background)) {
         NmDivider()
@@ -57,6 +68,32 @@ fun MiniPlayer(
                 .fillMaxWidth()
                 .height(64.dp)
                 .clickable(onClick = onOpen)
+                // Swipe left/right to skip, up to open Now Playing.
+                .pointerInput(Unit) {
+                    val threshold = 56.dp.toPx()
+                    var dy = 0f
+                    detectDragGestures(
+                        onDragStart = { dy = 0f },
+                        onDragEnd = {
+                            val dx = swipe.value
+                            when {
+                                -dy > threshold && -dy > kotlin.math.abs(dx) -> { haptics.gesture(); onOpen() }
+                                dx < -threshold -> { haptics.gesture(); player.next() }
+                                dx > threshold -> { haptics.gesture(); player.previous() }
+                            }
+                            scope.launch { swipe.animateTo(0f, spring(dampingRatio = 0.7f)) }
+                        },
+                        onDragCancel = { scope.launch { swipe.animateTo(0f) } },
+                    ) { change, drag ->
+                        change.consume()
+                        dy += drag.y
+                        scope.launch { swipe.snapTo(swipe.value + drag.x) }
+                    }
+                }
+                .graphicsLayer {
+                    translationX = swipe.value * 0.4f
+                    alpha = 1f - (kotlin.math.abs(swipe.value) / (size.width * 0.8f)).coerceIn(0f, 0.6f)
+                }
                 .padding(start = Spacing.l, end = Spacing.xs),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -97,7 +134,10 @@ fun MiniPlayer(
                 Modifier
                     .size(48.dp)
                     .clip(CircleShape)
-                    .clickable(role = Role.Button, onClick = player::togglePlayPause),
+                    .clickable(role = Role.Button) {
+                        haptics.tick()
+                        player.togglePlayPause()
+                    },
                 contentAlignment = Alignment.Center,
             ) {
                 Box(
@@ -115,21 +155,26 @@ fun MiniPlayer(
                     )
                 }
             }
-            NmIconButton(NmIcons.Next, "Next track", player::next, enabled = state.hasNext, iconSize = 20.dp)
+            NmIconButton(NmIcons.Next, "Next track", { haptics.tick(); player.next() }, enabled = state.hasNext, iconSize = 20.dp)
         }
-        // Thin progress line along the bottom edge.
-        Box(
+        // Dotted progress along the bottom edge: played dots red, the rest faint.
+        Canvas(
             Modifier
                 .fillMaxWidth()
-                .height(2.dp)
-                .background(colors.divider),
+                .height(4.dp),
         ) {
-            Box(
-                Modifier
-                    .fillMaxWidth(progress)
-                    .fillMaxHeight()
-                    .background(colors.accent),
-            )
+            val step = 6.dp.toPx()
+            val r = 1.2.dp.toPx()
+            val count = (size.width / step).toInt().coerceAtLeast(1)
+            val playedDots = (progress * count).toInt()
+            for (i in 0 until count) {
+                drawCircle(
+                    if (i < playedDots) colors.accent else colors.textPrimary,
+                    radius = r,
+                    center = Offset(step * (i + 0.5f), size.height / 2),
+                    alpha = if (i < playedDots) 1f else 0.15f,
+                )
+            }
         }
     }
 }

@@ -70,6 +70,7 @@ private fun ListTitle(title: String, subtitle: String, inset: Boolean = true) {
 @Composable
 fun AlbumsScreen() {
     val library by LocalAppContainer.current.music.library.collectAsStateWithLifecycle()
+    val player = LocalAppContainer.current.player
     val navigator = LocalNavigator.current
     var sort by rememberSaveable { mutableStateOf(AlbumSort.TITLE) }
     var showSort by remember { mutableStateOf(false) }
@@ -91,7 +92,7 @@ fun AlbumsScreen() {
                 item(span = { GridItemSpan(maxLineSpan) }) { EmptyState("No albums", "Albums appear once your library has music.", icon = NmIcons.Disc) }
             }
             items(albums, key = { it.key }) { album ->
-                AlbumCard(album, onClick = { navigator.album(album.key) })
+                AlbumCard(album, onClick = { navigator.album(album.key) }, onPlay = { player.play(album.songs) })
             }
         }
     }

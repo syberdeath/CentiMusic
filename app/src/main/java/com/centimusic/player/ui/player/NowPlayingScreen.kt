@@ -55,6 +55,12 @@ import com.centimusic.player.navigation.LocalNavigator
 import com.centimusic.player.navigation.LocalSongMenu
 import com.centimusic.player.playback.OutputKind
 import com.centimusic.player.ui.components.Artwork
+import com.centimusic.player.ui.components.MarqueeText
+import com.centimusic.player.ui.components.rememberHaptics
+import com.centimusic.player.ui.visualizer.DotProgress
+import androidx.compose.animation.core.Animatable
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import com.centimusic.player.ui.pulse.PulseHalo
 import com.centimusic.player.ui.pulse.rememberArtworkPulse
 import com.centimusic.player.ui.components.NmIconButton
@@ -82,6 +88,9 @@ fun NowPlayingScreen() {
     val scope = androidx.compose.runtime.rememberCoroutineScope()
 
     val motion = rememberArtworkMotion(playing = playback.isPlaying)
+    val haptics = rememberHaptics()
+    val swipeX = remember { Animatable(0f) }
+    val swipeY = remember { Animatable(0f) }
     val pulse = rememberArtworkPulse(playing = playback.isPlaying, trackKey = playback.current?.id, historySize = 72)
     // Shrinks a little on pause and springs back when playback resumes.
     val cardScale by animateFloatAsState(
@@ -132,7 +141,41 @@ fun NowPlayingScreen() {
             Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(horizontal = 28.dp, vertical = Spacing.l),
+                .padding(horizontal = Spacing.s, vertical = Spacing.s)
+                // Swipe the artwork: left/right to change track, down to close the player.
+                .pointerInput(Unit) {
+                    val threshold = 72.dp.toPx()
+                    detectDragGestures(
+                        onDragEnd = {
+                            val dx = swipeX.value
+                            val dy = swipeY.value
+                            when {
+                                dy > threshold * 1.4f && dy > kotlin.math.abs(dx) -> {
+                                    haptics.gesture()
+                                    navigator.back()
+                                }
+                                dx < -threshold -> { haptics.gesture(); player.next() }
+                                dx > threshold -> { haptics.gesture(); player.previous() }
+                            }
+                            scope.launch { swipeX.animateTo(0f, spring(dampingRatio = 0.7f)) }
+                            scope.launch { swipeY.animateTo(0f, spring(dampingRatio = 0.7f)) }
+                        },
+                        onDragCancel = {
+                            scope.launch { swipeX.animateTo(0f) }
+                            scope.launch { swipeY.animateTo(0f) }
+                        },
+                    ) { change, drag ->
+                        change.consume()
+                        scope.launch { swipeX.snapTo(swipeX.value + drag.x) }
+                        scope.launch { swipeY.snapTo((swipeY.value + drag.y).coerceAtLeast(0f)) }
+                    }
+                }
+                .graphicsLayer {
+                    // The artwork follows the finger, with resistance.
+                    translationX = swipeX.value * 0.45f
+                    translationY = swipeY.value * 0.35f
+                    alpha = 1f - (kotlin.math.abs(swipeX.value) / (size.width * 1.6f)).coerceIn(0f, 0.5f)
+                },
             contentAlignment = Alignment.Center,
         ) {
             val area = minOf(maxWidth, maxHeight)
@@ -194,13 +237,7 @@ fun NowPlayingScreen() {
                 Column(Modifier.weight(1f)) {
                     AnimatedContent(song, transitionSpec = { fadeIn(tween(250)) togetherWith fadeOut(tween(150)) }, contentKey = { it.id }, label = "title") { s ->
                         Column {
-                            Text(
-                                s.title,
-                                style = NmTheme.type.trackTitle,
-                                color = colors.textPrimary,
-                                maxLines = 1,
-                                modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE),
-                            )
+                            MarqueeText(s.title, style = NmTheme.type.trackTitle, color = colors.textPrimary)
                             Spacer(Modifier.height(Spacing.xs))
                             Text(
                                 s.artist,
@@ -215,17 +252,25 @@ fun NowPlayingScreen() {
                 NmIconButton(
                     if (isLiked) NmIcons.HeartFilled else NmIcons.Heart,
                     if (isLiked) "Remove from Liked Songs" else "Add to Liked Songs",
-                    { scope.launch { container.favorites.setLiked(song, !isLiked, library) } },
+                    {
+                        haptics.confirm()
+                        scope.launch { container.favorites.setLiked(song, !isLiked, library) }
+                    },
                     tint = if (isLiked) colors.accent else colors.textPrimary,
                 )
             }
 
             Spacer(Modifier.height(Spacing.l))
-            SeekBar(
+            DotProgress(
                 positionMs = position,
                 durationMs = playback.durationMs,
+                playing = playback.isPlaying,
                 onSeek = player::seekTo,
                 onScrub = { scrubFraction = it },
+                dots = 40,
+                playedColor = colors.textPrimary,
+                restColor = colors.textPrimary,
+                accent = colors.accent,
             )
             Row(Modifier.fillMaxWidth()) {
                 Text(shownPosition.formatDuration(), style = NmTheme.type.dotCaption, color = colors.textSecondary)
@@ -242,12 +287,12 @@ fun NowPlayingScreen() {
                 NmIconButton(
                     NmIcons.Shuffle,
                     if (playback.shuffle) "Shuffle on" else "Shuffle off",
-                    player::toggleShuffle,
+                    { haptics.tick(); player.toggleShuffle() },
                     tint = if (playback.shuffle) colors.accent else colors.textPrimary,
                 )
-                NmIconButton(NmIcons.Previous, "Previous track", player::previous, iconSize = 28.dp)
-                PlayPauseButton(playback.isPlaying, player::togglePlayPause)
-                NmIconButton(NmIcons.Next, "Next track", player::next, enabled = playback.hasNext, iconSize = 28.dp)
+                NmIconButton(NmIcons.Previous, "Previous track", { haptics.tick(); player.previous() }, iconSize = 28.dp)
+                PlayPauseButton(playback.isPlaying) { haptics.tick(); player.togglePlayPause() }
+                NmIconButton(NmIcons.Next, "Next track", { haptics.tick(); player.next() }, enabled = playback.hasNext, iconSize = 28.dp)
                 NmIconButton(
                     if (playback.repeatMode == Player.REPEAT_MODE_ONE) NmIcons.RepeatOne else NmIcons.Repeat,
                     when (playback.repeatMode) {
@@ -255,7 +300,7 @@ fun NowPlayingScreen() {
                         Player.REPEAT_MODE_ONE -> "Repeat one"
                         else -> "Repeat off"
                     },
-                    player::cycleRepeat,
+                    { haptics.tick(); player.cycleRepeat() },
                     tint = if (playback.repeatMode != Player.REPEAT_MODE_OFF) colors.accent else colors.textPrimary,
                 )
             }

@@ -157,8 +157,13 @@ fun DotProgress(
     onSeek: (Long) -> Unit,
     modifier: Modifier = Modifier,
     dots: Int = 48,
+    onScrub: (Float?) -> Unit = {},
+    playedColor: Color = Color.White,
+    restColor: Color = Color.White,
+    accent: Color = Color(0xFFFF3030),
 ) {
     val duration by rememberUpdatedState(durationMs)
+    val scrub by rememberUpdatedState(onScrub)
     val seek by rememberUpdatedState(onSeek)
     var dragFraction by remember { mutableStateOf<Float?>(null) }
     val fraction = dragFraction ?: if (durationMs > 0) (positionMs.toFloat() / durationMs).coerceIn(0f, 1f) else 0f
@@ -184,15 +189,23 @@ fun DotProgress(
             }
             .pointerInput(Unit) {
                 detectHorizontalDragGestures(
-                    onDragStart = { dragFraction = (it.x / size.width).coerceIn(0f, 1f) },
+                    onDragStart = {
+                        dragFraction = (it.x / size.width).coerceIn(0f, 1f)
+                        scrub(dragFraction)
+                    },
                     onDragEnd = {
                         dragFraction?.let { f -> if (duration > 0) seek((f * duration).toLong()) }
                         dragFraction = null
+                        scrub(null)
                     },
-                    onDragCancel = { dragFraction = null },
+                    onDragCancel = {
+                        dragFraction = null
+                        scrub(null)
+                    },
                 ) { change, _ ->
                     change.consume()
                     dragFraction = (change.position.x / size.width).coerceIn(0f, 1f)
+                    scrub(dragFraction)
                 }
             },
     ) {
@@ -205,11 +218,11 @@ fun DotProgress(
             when {
                 i == current -> {
                     val pulse = if (playing) 1f - kotlin.math.abs(glow * 2f - 1f) else 0f
-                    drawCircle(Color(0xFFFF3030), radius = r * (2.4f + 1.6f * pulse), center = Offset(x, y), alpha = 0.18f * pulse)
-                    drawCircle(Color(0xFFFF3030), radius = r * 1.9f, center = Offset(x, y))
+                    drawCircle(accent, radius = r * (2.4f + 1.6f * pulse), center = Offset(x, y), alpha = 0.18f * pulse)
+                    drawCircle(accent, radius = r * 1.9f, center = Offset(x, y))
                 }
-                i < current -> drawCircle(Color.White, radius = r, center = Offset(x, y), alpha = 0.9f)
-                else -> drawCircle(Color.White, radius = r, center = Offset(x, y), alpha = 0.18f)
+                i < current -> drawCircle(playedColor, radius = r, center = Offset(x, y), alpha = 0.9f)
+                else -> drawCircle(restColor, radius = r, center = Offset(x, y), alpha = 0.18f)
             }
         }
     }

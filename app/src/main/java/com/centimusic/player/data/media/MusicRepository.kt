@@ -196,6 +196,12 @@ class MusicRepository(
         }
     }
 
+    /** Android 11+: one system dialog to delete several MediaStore files at once. */
+    fun batchDeleteRequest(songs: List<Song>): IntentSender {
+        check(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
+        return MediaStore.createDeleteRequest(context.contentResolver, songs.map { it.uri }).intentSender
+    }
+
     /** Call after the user approved the system delete dialog. */
     suspend fun completeConfirmedDelete(song: Song): DeleteResult = withContext(Dispatchers.IO) {
         // Android 11+ deletes in the dialog itself; Android 10 granted access, so delete now.

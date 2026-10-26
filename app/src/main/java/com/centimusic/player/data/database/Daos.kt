@@ -97,6 +97,9 @@ interface HistoryDao {
     @Query("SELECT * FROM play_history ORDER BY playedAt DESC LIMIT 50")
     fun observeRecentlyPlayed(): Flow<List<PlayHistoryEntity>>
 
+    @Query("SELECT * FROM play_history WHERE playCount >= 2 ORDER BY playCount DESC, playedAt DESC LIMIT 30")
+    fun observeMostPlayed(): Flow<List<PlayHistoryEntity>>
+
     @Query("SELECT * FROM play_history WHERE mediaId = :mediaId")
     suspend fun playEntry(mediaId: String): PlayHistoryEntity?
 

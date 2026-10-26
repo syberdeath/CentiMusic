@@ -53,6 +53,7 @@ import com.centimusic.player.navigation.LocalAppContainer
 import com.centimusic.player.navigation.LocalNavigator
 import com.centimusic.player.playback.AudioLevelMeter
 import com.centimusic.player.ui.components.Artwork
+import com.centimusic.player.ui.components.rememberHaptics
 import com.centimusic.player.ui.pulse.rememberIsVisible
 import com.centimusic.player.ui.theme.AccentRed
 import com.centimusic.player.ui.theme.DefaultNmType
@@ -60,7 +61,7 @@ import com.centimusic.player.ui.theme.NmIcons
 
 private val Black = Color(0xFF080808)
 private val Secondary = Color(0xFFA0A0A0)
-private val Tertiary = Color(0xFF6B6B6B)
+private val Tertiary = Color(0xFF7E7E7E)
 
 /**
  * Full-screen, always-black visualizer. The waveform is driven by the decoded audio's real
@@ -80,6 +81,7 @@ fun VisualizerScreen() {
 
     // Battery: animate only while playing AND the screen is actually visible.
     val visible = rememberIsVisible()
+    val haptics = rememberHaptics()
     val song = playback.current
 
     BoxWithConstraints(Modifier.fillMaxSize().background(Black)) {
@@ -139,10 +141,10 @@ fun VisualizerScreen() {
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                IconTap(NmIcons.Previous, "Previous track", player::previous, size = 28)
+                IconTap(NmIcons.Previous, "Previous track", { haptics.tick(); player.previous() }, size = 28)
                 Box(
                     Modifier.size(72.dp).clip(CircleShape).background(AccentRed)
-                        .clickable(role = Role.Button, onClick = player::togglePlayPause),
+                        .clickable(role = Role.Button) { haptics.tick(); player.togglePlayPause() },
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
@@ -152,7 +154,7 @@ fun VisualizerScreen() {
                         modifier = Modifier.size(30.dp),
                     )
                 }
-                IconTap(NmIcons.Next, "Next track", player::next, size = 28, enabled = playback.hasNext)
+                IconTap(NmIcons.Next, "Next track", { haptics.tick(); player.next() }, size = 28, enabled = playback.hasNext)
             }
         }
     }

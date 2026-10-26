@@ -21,6 +21,8 @@ data class HomeUiState(
     val allSongs: List<Song> = emptyList(),
     val recentlyPlayed: List<Song> = emptyList(),
     val recentlyAdded: List<Song> = emptyList(),
+    val mostPlayed: List<Song> = emptyList(),
+    val liked: List<Song> = emptyList(),
     val albums: List<Album> = emptyList(),
 )
 
@@ -29,7 +31,9 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
         container.music.library,
         container.music.scanState,
         container.history.recentlyPlayedIds,
-    ) { library, scan, playedIds ->
+        container.history.mostPlayedIds,
+        container.favorites.likedIds,
+    ) { library, scan, playedIds, mostIds, likedIds ->
         HomeUiState(
             loading = scan == ScanState.Idle || (scan == ScanState.Scanning && library.isEmpty),
             scanState = scan,
@@ -37,6 +41,8 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
             allSongs = library.songs,
             recentlyPlayed = playedIds.mapNotNull { library.byId[it] }.distinctBy { it.id }.take(20),
             recentlyAdded = library.songs.sortedByDescending { it.dateAddedSec }.take(20),
+            mostPlayed = mostIds.mapNotNull { library.byId[it] }.distinctBy { it.id }.take(20),
+            liked = likedIds.mapNotNull { library.byId[it] }.distinctBy { it.id }.take(20),
             albums = library.albums.sortedByDescending { album -> album.songs.maxOf { it.dateAddedSec } }.take(12),
         )
     }.flowOn(Dispatchers.Default)

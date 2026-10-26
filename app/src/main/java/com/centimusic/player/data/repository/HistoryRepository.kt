@@ -9,6 +9,8 @@ import kotlinx.coroutines.flow.map
 class HistoryRepository(private val dao: HistoryDao) {
     val recentSearches: Flow<List<String>> = dao.observeSearches().map { rows -> rows.map { it.query } }
     val recentlyPlayedIds: Flow<List<String>> = dao.observeRecentlyPlayed().map { rows -> rows.map { it.mediaId } }
+    /** Songs played at least twice, most played first. */
+    val mostPlayedIds: Flow<List<String>> = dao.observeMostPlayed().map { rows -> rows.map { it.mediaId } }
 
     suspend fun recordSearch(query: String) {
         val q = query.trim()

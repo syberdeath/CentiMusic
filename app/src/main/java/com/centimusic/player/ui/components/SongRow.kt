@@ -2,6 +2,7 @@ package com.centimusic.player.ui.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
@@ -42,12 +43,17 @@ fun SongRow(
     showArtwork: Boolean = true,
     onMore: (() -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null,
+    /** Long-press action; defaults to the overflow menu. */
+    onLongClick: (() -> Unit)? = onMore,
+    /** Non-null while a multi-selection is active: shows a check circle instead of the trailing actions. */
+    selected: Boolean? = null,
 ) {
     val colors = NmTheme.colors
     Row(
         modifier
             .fillMaxWidth()
-            .combinedClickable(onClick = onClick, onLongClick = onMore)
+            .background(if (selected == true) colors.accent.copy(alpha = 0.08f) else androidx.compose.ui.graphics.Color.Transparent)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
             .padding(start = Spacing.gutter, end = Spacing.xs, top = Spacing.s, bottom = Spacing.s),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -94,7 +100,25 @@ fun SongRow(
         }
         Spacer(Modifier.width(Spacing.s))
         Text(song.durationMs.formatDuration(), style = NmTheme.type.dotCaption, color = colors.textTertiary)
-        if (trailing != null) {
+        if (selected != null) {
+            Box(Modifier.size(Spacing.touchTarget), contentAlignment = Alignment.Center) {
+                if (selected) {
+                    Box(
+                        Modifier
+                            .size(22.dp)
+                            .clip(CircleShape)
+                            .background(colors.accent),
+                        contentAlignment = Alignment.Center,
+                    ) { androidx.compose.material3.Icon(NmIcons.Check, "Selected", tint = colors.onAccent, modifier = Modifier.size(14.dp)) }
+                } else {
+                    Box(
+                        Modifier
+                            .size(22.dp)
+                            .border(1.5.dp, colors.textTertiary, CircleShape),
+                    )
+                }
+            }
+        } else if (trailing != null) {
             trailing()
         } else if (onMore != null) {
             NmIconButton(NmIcons.MoreVertical, "More options for ${song.title}", onMore, tint = colors.textSecondary, iconSize = 20.dp)
@@ -113,19 +137,41 @@ fun CoverCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     seed: Int? = null,
+    titleStyle: androidx.compose.ui.text.TextStyle = NmTheme.type.bodySmall,
+    onPlay: (() -> Unit)? = null,
 ) {
     Column(
         modifier
             .clip(RoundedCornerShape(Spacing.artworkCorner))
             .clickable(onClick = onClick),
     ) {
-        if (song != null || seed == null) {
-            Artwork(song, Modifier.fillMaxWidth().aspectRatio(1f), sizeHint = 192.dp)
-        } else {
-            ArtworkPlaceholder(seed, Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(Spacing.artworkCorner)))
+        Box {
+            if (song != null || seed == null) {
+                Artwork(song, Modifier.fillMaxWidth().aspectRatio(1f), sizeHint = 192.dp)
+            } else {
+                ArtworkPlaceholder(seed, Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(Spacing.artworkCorner)))
+            }
+            if (onPlay != null) {
+                val haptics = rememberHaptics()
+                Box(
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(Spacing.s)
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(NmTheme.colors.accent)
+                        .clickable(role = androidx.compose.ui.semantics.Role.Button) {
+                            haptics.tick()
+                            onPlay()
+                        },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    androidx.compose.material3.Icon(NmIcons.Play, "Play $title", tint = NmTheme.colors.onAccent, modifier = Modifier.size(16.dp))
+                }
+            }
         }
         Spacer(Modifier.height(Spacing.s))
-        Text(title, style = NmTheme.type.bodySmall, color = NmTheme.colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(title, style = titleStyle, color = NmTheme.colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Spacer(Modifier.height(2.dp))
         Text(subtitle, style = NmTheme.type.caption, color = NmTheme.colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Spacer(Modifier.height(Spacing.xs))
@@ -133,6 +179,6 @@ fun CoverCard(
 }
 
 @Composable
-fun AlbumCard(album: Album, onClick: () -> Unit, modifier: Modifier = Modifier) =
-    CoverCard(album.cover, album.title, album.artist, onClick, modifier)
+fun AlbumCard(album: Album, onClick: () -> Unit, modifier: Modifier = Modifier, onPlay: (() -> Unit)? = null) =
+    CoverCard(album.cover, album.title, album.artist, onClick, modifier, titleStyle = NmTheme.type.label, onPlay = onPlay)
 

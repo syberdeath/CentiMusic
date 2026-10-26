@@ -21,33 +21,52 @@ import com.centimusic.player.navigation.LocalAppContainer
 import com.centimusic.player.navigation.LocalMessenger
 import kotlinx.coroutines.launch
 
-/** Entry point for "Delete from device"; the flow itself runs in [SongDeleteHost]. */
+/** Entry point for "Delete from device" (one song or a selection); the flow runs in [SongDeleteHost]. */
 @Stable
 class SongDeleter {
-    /** Song waiting for CentiMusic's own confirmation dialog. */
-    var confirming by mutableStateOf<Song?>(null)
+    /** Songs waiting for CentiMusic's own confirmation dialog. */
+    var confirming by mutableStateOf<List<Song>?>(null)
         internal set
-    internal var start: (Song) -> Unit = {}
+    internal var start: (List<Song>) -> Unit = {}
 
-    fun request(song: Song) {
+    fun request(song: Song) = request(listOf(song))
+
+    fun request(songs: List<Song>) {
+        if (songs.isEmpty()) return
         // Android 11+ shows its own system confirmation for MediaStore files, so don't ask twice.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && song.source == SongSource.MEDIA_STORE) start(song)
-        else confirming = song
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && songs.all { it.source == SongSource.MEDIA_STORE }) start(songs)
+        else confirming = songs
     }
 }
 
 val LocalSongDeleter = staticCompositionLocalOf { SongDeleter() }
 
 private class DeleteFlow {
-    var awaiting: Song? = null
-    var perform: (Song) -> Unit = {}
+    val queue = ArrayDeque<Song>()
+    var awaiting: List<Song> = emptyList()
+    var total = 0
+    var deleted = 0
+    var removedOnly = 0
+    var lastFailure: String? = null
+    var firstTitle = ""
+    var next: () -> Unit = {}
     var handle: (Song, DeleteResult) -> Unit = { _, _ -> }
+
+    fun reset(songs: List<Song>) {
+        queue.clear()
+        awaiting = emptyList()
+        total = songs.size
+        deleted = 0
+        removedOnly = 0
+        lastFailure = null
+        firstTitle = songs.firstOrNull()?.title.orEmpty()
+    }
 }
 
 /**
- * Deletes a song's file the way each Android version requires: the system delete dialog on 11+,
- * RecoverableSecurityException's dialog on 10, and WRITE_EXTERNAL_STORAGE on 8–9. Afterwards the
- * song is removed from the queue, playlists, likes and history.
+ * Deletes songs the way each Android version requires: one system delete dialog for the whole
+ * batch on 11+, RecoverableSecurityException's dialog per file on 10, and WRITE_EXTERNAL_STORAGE
+ * on 8–9. Deleted songs are removed from the queue, playlists, likes and history.
  */
 @Composable
 fun SongDeleteHost(deleter: SongDeleter) {
@@ -56,53 +75,111 @@ fun SongDeleteHost(deleter: SongDeleter) {
     val scope = rememberCoroutineScope()
     val flow = remember { DeleteFlow() }
 
+    fun finish() {
+        val text = when {
+            flow.deleted == 0 && flow.removedOnly == 0 -> flow.lastFailure ?: "Nothing was deleted"
+            flow.total == 1 && flow.deleted == 1 -> "Deleted \"${flow.firstTitle}\""
+            flow.total == 1 -> "This file can't be deleted from here, so it was removed from your library"
+            else -> buildString {
+                append("Deleted ${flow.deleted} ${if (flow.deleted == 1) "song" else "songs"}")
+                if (flow.removedOnly > 0) append(" · ${flow.removedOnly} removed from library only")
+            }
+        }
+        message(text)
+    }
+
     val systemDialog = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
-        val song = flow.awaiting ?: return@rememberLauncherForActivityResult
-        flow.awaiting = null
-        if (result.resultCode == Activity.RESULT_OK) {
-            scope.launch { flow.handle(song, container.music.completeConfirmedDelete(song)) }
-        } else {
+        val songs = flow.awaiting
+        flow.awaiting = emptyList()
+        if (songs.isEmpty()) return@rememberLauncherForActivityResult
+        if (result.resultCode != Activity.RESULT_OK) {
+            flow.queue.clear()
             message("Not deleted")
+            return@rememberLauncherForActivityResult
+        }
+        scope.launch {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                // The system dialog already deleted every file in the batch.
+                songs.forEach {
+                    flow.deleted++
+                    container.forgetDeletedSong(it.id)
+                }
+                flow.next()
+            } else {
+                val song = songs.first()
+                flow.handle(song, container.music.completeConfirmedDelete(song))
+            }
         }
     }
     val writePermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        val song = flow.awaiting ?: return@rememberLauncherForActivityResult
-        flow.awaiting = null
-        if (granted) flow.perform(song) else message("Storage permission is needed to delete files")
+        if (granted) {
+            flow.next()
+        } else {
+            flow.queue.clear()
+            message("Storage permission is needed to delete files")
+        }
     }
 
+    flow.next = {
+        scope.launch {
+            val song = flow.queue.removeFirstOrNull()
+            if (song == null) finish() else flow.handle(song, container.music.delete(song))
+        }
+    }
     flow.handle = { song, result ->
         when (result) {
             DeleteResult.Deleted -> {
-                message("Deleted \"${song.title}\"")
+                flow.deleted++
                 scope.launch { container.forgetDeletedSong(song.id) }
+                flow.next()
             }
             DeleteResult.RemovedFromLibraryOnly -> {
-                message("This file can't be deleted from here, so it was removed from your library")
+                flow.removedOnly++
                 scope.launch { container.forgetDeletedSong(song.id) }
+                flow.next()
             }
             is DeleteResult.NeedsConfirmation -> {
-                flow.awaiting = song
+                flow.awaiting = listOf(song)
                 systemDialog.launch(IntentSenderRequest.Builder(result.sender).build())
             }
             DeleteResult.NeedsWritePermission -> {
-                flow.awaiting = song
+                flow.queue.addFirst(song)
                 writePermission.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
             }
-            is DeleteResult.Failed -> message(result.reason)
+            is DeleteResult.Failed -> {
+                flow.lastFailure = result.reason
+                flow.next()
+            }
         }
     }
-    flow.perform = { song -> scope.launch { flow.handle(song, container.music.delete(song)) } }
-    deleter.start = flow.perform
+    val start: (List<Song>) -> Unit = { songs ->
+        flow.reset(songs)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val (mediaStore, imported) = songs.partition { it.source == SongSource.MEDIA_STORE }
+            flow.queue.addAll(imported)
+            if (mediaStore.isNotEmpty()) {
+                flow.awaiting = mediaStore
+                systemDialog.launch(IntentSenderRequest.Builder(container.music.batchDeleteRequest(mediaStore)).build())
+            } else {
+                flow.next()
+            }
+        } else {
+            flow.queue.addAll(songs)
+            flow.next()
+        }
+    }
+    deleter.start = start
 
-    deleter.confirming?.let { song ->
+    deleter.confirming?.let { songs ->
+        val single = songs.singleOrNull()
         ConfirmDialog(
-            title = "Delete \"${song.title}\"?",
-            message = "This permanently deletes the file from your device. It will also be removed from your playlists and likes.",
+            title = if (single != null) "Delete \"${single.title}\"?" else "Delete ${songs.size} songs?",
+            message = "This permanently deletes ${if (single != null) "the file" else "these files"} from your device. " +
+                "${if (single != null) "It" else "They"} will also be removed from your playlists and likes.",
             confirmLabel = "Delete",
             onConfirm = {
                 deleter.confirming = null
-                flow.perform(song)
+                start(songs)
             },
             onDismiss = { deleter.confirming = null },
         )
