@@ -53,7 +53,6 @@ import com.centimusic.player.navigation.LocalAppContainer
 import com.centimusic.player.navigation.LocalNavigator
 import com.centimusic.player.playback.AudioLevelMeter
 import com.centimusic.player.ui.components.Artwork
-import com.centimusic.player.ui.components.MarqueeText
 import com.centimusic.player.ui.components.rememberHaptics
 import com.centimusic.player.ui.pulse.rememberIsVisible
 import com.centimusic.player.ui.theme.AccentRed
@@ -116,7 +115,7 @@ fun VisualizerScreen() {
                     Artwork(s, Modifier.size(64.dp), corner = 10.dp, sizeHint = 128.dp)
                     Spacer(Modifier.width(16.dp))
                     Column(Modifier.weight(1f)) {
-                        MarqueeText(s.title, style = DefaultNmType.trackTitle.copy(fontSize = 24.sp, lineHeight = 28.sp), color = Color.White)
+                        Text(s.title, style = DefaultNmType.trackTitle.copy(fontSize = 24.sp, lineHeight = 28.sp), color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Spacer(Modifier.height(4.dp))
                         Text("${s.artist} · ${s.album}", style = DefaultNmType.body, color = Secondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }

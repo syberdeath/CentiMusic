@@ -82,7 +82,7 @@ fun SongRow(
             Spacer(Modifier.width(Spacing.m))
         }
         Column(Modifier.weight(1f)) {
-            MarqueeText(song.title, style = NmTheme.type.body, color = if (isCurrent) colors.accent else colors.textPrimary)
+            Text(song.title, style = NmTheme.type.body, color = if (isCurrent) colors.accent else colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Spacer(Modifier.height(2.dp))
             Text(
                 song.artist,
@@ -165,7 +165,7 @@ fun CoverCard(
             }
         }
         Spacer(Modifier.height(Spacing.s))
-        MarqueeText(title, style = titleStyle, color = NmTheme.colors.textPrimary, edge = 10.dp)
+        Text(title, style = titleStyle, color = NmTheme.colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Spacer(Modifier.height(2.dp))
         Text(subtitle, style = NmTheme.type.caption, color = NmTheme.colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Spacer(Modifier.height(Spacing.xs))

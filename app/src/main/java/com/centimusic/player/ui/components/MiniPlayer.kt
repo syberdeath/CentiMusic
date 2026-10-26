@@ -127,7 +127,7 @@ fun MiniPlayer(
             }
             Spacer(Modifier.width(Spacing.m))
             Column(Modifier.weight(1f)) {
-                MarqueeText(song.title, style = NmTheme.type.body, color = colors.textPrimary)
+                Text(song.title, style = NmTheme.type.body, color = colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(song.artist, style = NmTheme.type.caption, color = colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             Box(
