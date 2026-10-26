@@ -57,7 +57,10 @@ import com.centimusic.player.data.media.AudioPermission
 import com.centimusic.player.data.preferences.UserPreferences
 import com.centimusic.player.ui.components.BottomNavBar
 import com.centimusic.player.ui.components.MiniPlayer
+import com.centimusic.player.ui.components.LocalSongDeleter
 import com.centimusic.player.ui.components.SongActionsHost
+import com.centimusic.player.ui.components.SongDeleteHost
+import com.centimusic.player.ui.components.SongDeleter
 import com.centimusic.player.ui.home.HomeScreen
 import com.centimusic.player.ui.library.AlbumsScreen
 import com.centimusic.player.ui.library.ArtistsScreen
@@ -88,6 +91,7 @@ fun CentiMusicRoot(container: AppContainer) {
         val snackbar = remember { SnackbarHostState() }
         val scope = rememberCoroutineScope()
         val songMenu = remember { SongMenuController() }
+        val songDeleter = remember { SongDeleter() }
         val messenger: (String) -> Unit = remember {
             { text ->
                 scope.launch {
@@ -109,11 +113,13 @@ fun CentiMusicRoot(container: AppContainer) {
             LocalNavigator provides navigator,
             LocalMessenger provides messenger,
             LocalSongMenu provides songMenu,
+            LocalSongDeleter provides songDeleter,
             LocalLibraryAccess provides access,
         ) {
             Box(Modifier.fillMaxSize()) {
                 AppScaffold(navController, navigator, container, snackbar)
                 SongActionsHost(songMenu)
+                SongDeleteHost(songDeleter)
                 if (showSplash) AnimatedSplash(onFinished = { showSplash = false })
             }
         }

@@ -123,8 +123,12 @@ fun SongActionsHost(controller: SongMenuController) {
                 }
                 SheetAction(NmIcons.Disc, "Go to album") { close { navigator.album(song.albumKey) } }
                 SheetAction(NmIcons.Person, "Go to artist") { close { navigator.artist(song.artist) } }
+                val deleter = LocalSongDeleter.current
+                SheetAction(NmIcons.Trash, "Delete from device", tint = colors.accent) {
+                    close { deleter.request(song) }
+                }
                 if (song.source == SongSource.IMPORTED) {
-                    SheetAction(NmIcons.Trash, "Remove from library") {
+                    SheetAction(NmIcons.Minus, "Remove from library") {
                         scope.launch { container.music.removeImported(song) }
                         close { message("Removed from library") }
                     }
@@ -139,7 +143,7 @@ fun SongActionsHost(controller: SongMenuController) {
 }
 
 @Composable
-private fun SheetAction(icon: ImageVector, label: String, onClick: () -> Unit) {
+private fun SheetAction(icon: ImageVector, label: String, tint: androidx.compose.ui.graphics.Color = NmTheme.colors.textPrimary, onClick: () -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -147,9 +151,9 @@ private fun SheetAction(icon: ImageVector, label: String, onClick: () -> Unit) {
             .padding(horizontal = Spacing.gutter, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(icon, contentDescription = null, tint = NmTheme.colors.textPrimary, modifier = Modifier.size(22.dp))
+        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(22.dp))
         Spacer(Modifier.width(Spacing.l))
-        Text(label, style = NmTheme.type.title, color = NmTheme.colors.textPrimary)
+        Text(label, style = NmTheme.type.title, color = tint)
     }
 }
 

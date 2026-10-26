@@ -43,6 +43,9 @@ interface PlaylistDao {
     @Query("DELETE FROM playlist_tracks WHERE playlistId = :id")
     suspend fun clearTracks(id: Long)
 
+    @Query("DELETE FROM playlist_tracks WHERE mediaId = :mediaId")
+    suspend fun deleteTracksFor(mediaId: String)
+
     @Transaction
     suspend fun replaceTracks(id: Long, mediaIds: List<String>, now: Long) {
         clearTracks(id)
@@ -99,6 +102,9 @@ interface HistoryDao {
 
     @Upsert
     suspend fun upsertPlay(entry: PlayHistoryEntity)
+
+    @Query("DELETE FROM play_history WHERE mediaId = :mediaId")
+    suspend fun deletePlay(mediaId: String)
 }
 
 @Dao

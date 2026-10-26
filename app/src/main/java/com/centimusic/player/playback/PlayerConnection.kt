@@ -234,6 +234,13 @@ class PlayerConnection(
         if (index in 0 until c.mediaItemCount) c.removeMediaItem(index)
     }
 
+    /** Removes every queue entry for [mediaId] (e.g. after its file was deleted). */
+    fun removeMediaId(mediaId: String) = withController { c ->
+        for (i in c.mediaItemCount - 1 downTo 0) {
+            if (c.getMediaItemAt(i).mediaId == mediaId) c.removeMediaItem(i)
+        }
+    }
+
     /** Clears everything except the track that is currently playing. */
     fun clearUpNext() = withController { c ->
         val current = c.currentMediaItemIndex

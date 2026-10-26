@@ -11,6 +11,7 @@ no streaming and no network permission.
 
 | Area | What it does |
 | --- | --- |
+| **Delete** | "Delete from device" in every song's menu. Android 11+ shows the system confirmation; Android 10 confirms in-app then may ask the system; Android 8–9 asks for the legacy write permission only when you delete. Deleted songs leave the queue, playlists, likes and history. Imported files are deleted through their provider when it allows it, otherwise removed from the library. |
 | **Library** | Scans MediaStore for local audio (title, artist, album, duration, track no., year, folder, artwork). Rescans automatically when files change, and on demand. Duplicates are removed by content URI. |
 | **Import** | Pick audio files from any folder or document provider with the system file picker (persisted read access). Also opens audio from "Open with" in file managers. |
 | **Home** | Dot-matrix hero, Shuffle all, Recently Played, Recently Added and Albums shelves, built from your real library. Empty, loading and permission states. |
@@ -106,6 +107,7 @@ the real audio sink in `LevelMeteringAudioSink`, a pass-through `ForwardingAudio
 | `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK` | Keep playing in the background. |
 | `POST_NOTIFICATIONS` (Android 13+) | Show the playback notification. |
 | `WAKE_LOCK` | Keep the CPU awake while playing with the screen off. |
+| `WRITE_EXTERNAL_STORAGE` (Android 8–9 only, `maxSdkVersion 28`) | Requested only when you delete a song; newer versions use the system delete dialog instead. |
 
 If audio access is denied the app still works with files picked through the system file picker.
 
@@ -169,6 +171,7 @@ the real audio sink in `LevelMeteringAudioSink`, a pass-through `ForwardingAudio
 | `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_MEDIA_PLAYBACK` | Keep playing in the background. |
 | `POST_NOTIFICATIONS` (Android 13+) | Show the playback notification. |
 | `WAKE_LOCK` | Keep the CPU awake while playing with the screen off. |
+| `WRITE_EXTERNAL_STORAGE` (Android 8–9 only, `maxSdkVersion 28`) | Requested only when you delete a song; newer versions use the system delete dialog instead. |
 
 If audio access is denied the app still works with files picked through the system file picker.
 

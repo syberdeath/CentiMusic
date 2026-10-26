@@ -30,4 +30,13 @@ class AppContainer(context: Context) {
     /** Created on first use from the UI; the playback service itself doesn't need a controller. */
     val player: PlayerConnection by lazy { PlayerConnection(appContext, scope, music.library) }
     val audioOutput: AudioOutputMonitor by lazy { AudioOutputMonitor(appContext) }
+
+    /** After a file is deleted: drop it from the queue, playlists, likes and history, then rescan. */
+    suspend fun forgetDeletedSong(mediaId: String) {
+        player.removeMediaId(mediaId)
+        database.playlistDao().deleteTracksFor(mediaId)
+        database.favoriteDao().delete(mediaId)
+        database.historyDao().deletePlay(mediaId)
+        music.rescan()
+    }
 }

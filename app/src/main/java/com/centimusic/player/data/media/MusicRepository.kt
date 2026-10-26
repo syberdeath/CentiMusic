@@ -1,6 +1,13 @@
 package com.centimusic.player.data.media
 
+import android.Manifest
+import android.app.RecoverableSecurityException
 import android.content.Context
+import android.content.IntentSender
+import android.content.pm.PackageManager
+import android.os.Build
+import android.provider.DocumentsContract
+import androidx.core.content.ContextCompat
 import android.content.Intent
 import android.database.ContentObserver
 import android.net.Uri
@@ -138,7 +145,13 @@ class MusicRepository(
     suspend fun importDocuments(uris: List<Uri>): Int = withContext(Dispatchers.IO) {
         val known = library.value.byId.keys
         val entities = uris.distinct().mapNotNull { uri ->
+            // Keep write access when the provider granted it, so the file can be deleted from the app later.
             runCatching {
+                context.contentResolver.takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
+                )
+            }.recoverCatching {
                 context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
             if (uri.toString() in known) null else reader.read(uri)
@@ -159,6 +172,44 @@ class MusicRepository(
         importedDao.delete(listOf(song.id))
     }
 
+    /**
+     * Deletes [song]'s file from the device. MediaStore files on Android 11+ (and some on 10) need
+     * the user's confirmation in a system dialog, returned as [DeleteResult.NeedsConfirmation].
+     */
+    suspend fun delete(song: Song): DeleteResult = withContext(Dispatchers.IO) {
+        val resolver = context.contentResolver
+        if (song.source == SongSource.IMPORTED) {
+            val deleted = runCatching { DocumentsContract.deleteDocument(resolver, song.uri) }.getOrDefault(false)
+            removeImported(song)
+            return@withContext if (deleted) DeleteResult.Deleted else DeleteResult.RemovedFromLibraryOnly
+        }
+        when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.R ->
+                DeleteResult.NeedsConfirmation(MediaStore.createDeleteRequest(resolver, listOf(song.uri)).intentSender)
+            Build.VERSION.SDK_INT == Build.VERSION_CODES.Q -> try {
+                deleteRow(song)
+            } catch (e: RecoverableSecurityException) {
+                DeleteResult.NeedsConfirmation(e.userAction.actionIntent.intentSender)
+            }
+            !hasLegacyWritePermission() -> DeleteResult.NeedsWritePermission
+            else -> runCatching { deleteRow(song) }.getOrElse { DeleteResult.Failed(it.message ?: "Couldn't delete the file") }
+        }
+    }
+
+    /** Call after the user approved the system delete dialog. */
+    suspend fun completeConfirmedDelete(song: Song): DeleteResult = withContext(Dispatchers.IO) {
+        // Android 11+ deletes in the dialog itself; Android 10 granted access, so delete now.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) DeleteResult.Deleted
+        else runCatching { deleteRow(song) }.getOrElse { DeleteResult.Failed(it.message ?: "Couldn't delete the file") }
+    }
+
+    private fun deleteRow(song: Song): DeleteResult =
+        if (context.contentResolver.delete(song.uri, null, null) > 0) DeleteResult.Deleted
+        else DeleteResult.Failed("The file was already gone")
+
+    private fun hasLegacyWritePermission(): Boolean =
+        ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+
     /** Builds a Song for an arbitrary content URI (e.g. "Open with" from a file manager). */
     suspend fun songForExternalUri(uri: Uri): Song? = withContext(Dispatchers.IO) {
         library.value.byId[uri.toString()] ?: reader.read(uri)?.toSong()
@@ -167,4 +218,14 @@ class MusicRepository(
     companion object {
         private const val TAG = "MusicRepository"
     }
+}
+
+sealed interface DeleteResult {
+    data object Deleted : DeleteResult
+    /** An imported file whose provider doesn't allow deleting: it was removed from the library only. */
+    data object RemovedFromLibraryOnly : DeleteResult
+    data class NeedsConfirmation(val sender: IntentSender) : DeleteResult
+    /** Android 8–9: WRITE_EXTERNAL_STORAGE must be granted first. */
+    data object NeedsWritePermission : DeleteResult
+    data class Failed(val reason: String) : DeleteResult
 }

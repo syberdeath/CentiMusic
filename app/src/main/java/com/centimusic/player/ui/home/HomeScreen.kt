@@ -38,6 +38,9 @@ import com.centimusic.player.ui.components.AlbumCard
 import com.centimusic.player.ui.components.CoverCard
 import com.centimusic.player.ui.components.EmptyState
 import com.centimusic.player.ui.components.HeroOrb
+import com.centimusic.player.ui.components.rememberEmissionClock
+import com.centimusic.player.ui.pulse.PulseMode
+import com.centimusic.player.ui.pulse.rememberArtworkPulse
 import com.centimusic.player.ui.components.LoadingState
 import com.centimusic.player.ui.components.NmIconButton
 import com.centimusic.player.ui.components.PillButton
@@ -137,13 +140,16 @@ fun HomeScreen() {
 
 @Composable
 private fun Hero(onSettings: () -> Unit) {
+    val playback by LocalAppContainer.current.player.state.collectAsStateWithLifecycle()
+    val clock = rememberEmissionClock(playing = playback.isPlaying)
+    val pulse = rememberArtworkPulse(playing = playback.isPlaying, trackKey = playback.current?.id)
     val colors = NmTheme.colors
     Box(
         Modifier
             .fillMaxWidth()
             .height(460.dp),
     ) {
-        HeroOrb(Modifier.fillMaxSize())
+        HeroOrb(Modifier.fillMaxSize(), clock = clock, level = { if (pulse.mode == PulseMode.LIVE) pulse.level else 0f })
         Row(
             Modifier
                 .fillMaxWidth()
