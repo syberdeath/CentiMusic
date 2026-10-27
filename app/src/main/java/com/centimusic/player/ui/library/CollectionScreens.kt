@@ -144,7 +144,9 @@ fun FoldersScreen() {
     val navigator = LocalNavigator.current
     LazyColumn(Modifier.fillMaxSize(), contentPadding = bottomContentPadding(LocalChromePadding.current)) {
         item {
-            TopBar(onBack = navigator::back)
+            TopBar(onBack = navigator::back) {
+                NmIconButton(NmIcons.Settings, "Hidden folders", navigator::hiddenFolders)
+            }
             ListTitle("Folders", plural(library.folders.size, "folder"))
         }
         if (library.folders.isEmpty()) {

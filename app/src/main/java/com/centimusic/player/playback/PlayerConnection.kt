@@ -73,7 +73,10 @@ class PlayerConnection(
     init {
         scope.launch { connect() }
         // Library rescans can update metadata for items already in the queue.
-        library.onEach { publish(full = true) }.launchIn(scope)
+        library.onEach {
+            syncQueueMetadata(it)
+            publish(full = true)
+        }.launchIn(scope)
     }
 
     private suspend fun connect() {
@@ -87,6 +90,24 @@ class PlayerConnection(
             pending.clear()
         } catch (e: Exception) {
             Log.e(TAG, "Couldn't connect to playback service", e)
+        }
+    }
+
+    /**
+     * After songs are edited, refresh their queue entries so the notification and lock screen show
+     * the new title, artist, album and cover. Same media id and URI, so playback isn't interrupted.
+     */
+    private fun syncQueueMetadata(lib: Library) {
+        val c = controller ?: return
+        for (i in 0 until c.mediaItemCount) {
+            val item = c.getMediaItemAt(i)
+            val song = lib.byId[item.mediaId]?.takeIf { it.id == item.mediaId } ?: continue
+            val meta = item.mediaMetadata
+            val changed = meta.title?.toString() != song.title ||
+                meta.artist?.toString() != song.artist ||
+                meta.albumTitle?.toString() != song.album ||
+                meta.extras?.getString(EXTRA_ARTWORK_PATH) != song.artworkPath
+            if (changed) c.replaceMediaItem(i, song.toMediaItem())
         }
     }
 

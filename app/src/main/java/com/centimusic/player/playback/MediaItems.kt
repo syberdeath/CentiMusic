@@ -12,6 +12,7 @@ internal const val EXTRA_DURATION = "nm.duration"
 internal const val EXTRA_ALBUM_ID = "nm.album_id"
 internal const val EXTRA_SOURCE = "nm.source"
 internal const val EXTRA_MEDIA_ID = "nm.media_id"
+internal const val EXTRA_ARTWORK_PATH = "nm.artwork_path"
 
 fun Song.toMediaItem(): MediaItem = MediaItem.Builder()
     .setMediaId(id)
@@ -27,7 +28,7 @@ fun Song.toMediaItem(): MediaItem = MediaItem.Builder()
             .setIsPlayable(true)
             .setIsBrowsable(false)
             .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
-            .setExtras(bundleOf(EXTRA_DURATION to durationMs, EXTRA_ALBUM_ID to albumId, EXTRA_SOURCE to source.name, EXTRA_MEDIA_ID to id))
+            .setExtras(bundleOf(EXTRA_DURATION to durationMs, EXTRA_ALBUM_ID to albumId, EXTRA_SOURCE to source.name, EXTRA_MEDIA_ID to id, EXTRA_ARTWORK_PATH to artworkPath))
             .build(),
     )
     .build()
@@ -47,6 +48,7 @@ fun MediaItem.toSong(): Song {
         dateAddedSec = 0,
         folder = "",
         source = extras?.getString(EXTRA_SOURCE)?.let { runCatching { SongSource.valueOf(it) }.getOrNull() } ?: SongSource.IMPORTED,
+        artworkPath = extras?.getString(EXTRA_ARTWORK_PATH),
     )
 }
 

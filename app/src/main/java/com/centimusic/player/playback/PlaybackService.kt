@@ -46,6 +46,7 @@ class PlaybackService : MediaSessionService() {
 
     private lateinit var player: ExoPlayer
     private var session: MediaSession? = null
+    private lateinit var fader: SongFader
 
     private var saveQueueJob: Job? = null
     private var progressJob: Job? = null
@@ -68,6 +69,7 @@ class PlaybackService : MediaSessionService() {
             .setWakeMode(C.WAKE_MODE_LOCAL)
             .build()
         player.addListener(playerListener)
+        fader = SongFader(player, scope).also(player::addListener)
 
         val openApp = PendingIntent.getActivity(
             this,
@@ -89,6 +91,7 @@ class PlaybackService : MediaSessionService() {
             container.preferences.preferences.collect { prefs ->
                 player.setHandleAudioBecomingNoisy(prefs.pauseOnDisconnect)
                 player.skipSilenceEnabled = prefs.skipSilence
+                fader.fadeMs = prefs.fadeSeconds * 1_000L
             }
         }
         scope.launch { restoreQueueIfEmpty(playWhenReady = false) }

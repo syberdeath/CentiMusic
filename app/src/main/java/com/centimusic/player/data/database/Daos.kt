@@ -97,6 +97,9 @@ interface HistoryDao {
     @Query("SELECT * FROM play_history ORDER BY playedAt DESC LIMIT 50")
     fun observeRecentlyPlayed(): Flow<List<PlayHistoryEntity>>
 
+    @Query("SELECT * FROM play_history")
+    fun observeAllPlays(): Flow<List<PlayHistoryEntity>>
+
     @Query("SELECT * FROM play_history WHERE playCount >= 2 ORDER BY playCount DESC, playedAt DESC LIMIT 30")
     fun observeMostPlayed(): Flow<List<PlayHistoryEntity>>
 
@@ -138,4 +141,19 @@ interface QueueDao {
         clear()
         insert(mediaIds.mapIndexed { i, id -> SavedQueueEntity(i, id) })
     }
+}
+
+@Dao
+interface SongEditDao {
+    @Query("SELECT * FROM song_edits")
+    fun observeAll(): Flow<List<SongEditEntity>>
+
+    @Query("SELECT * FROM song_edits WHERE mediaId = :mediaId")
+    suspend fun get(mediaId: String): SongEditEntity?
+
+    @Upsert
+    suspend fun upsert(edit: SongEditEntity)
+
+    @Query("DELETE FROM song_edits WHERE mediaId = :mediaId")
+    suspend fun delete(mediaId: String)
 }

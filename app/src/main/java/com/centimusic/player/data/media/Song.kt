@@ -23,6 +23,8 @@ data class Song(
     val dateAddedSec: Long,
     val folder: String,
     val source: SongSource,
+    /** Custom cover chosen in CentiMusic (app-private file), overriding the file's artwork. */
+    val artworkPath: String? = null,
 ) {
     val uri: Uri get() = Uri.parse(id)
 
@@ -32,7 +34,11 @@ data class Song(
 
     /** Songs on the same album share artwork, so cache artwork per album where possible. */
     val artworkKey: String
-        get() = if (source == SongSource.MEDIA_STORE && albumId > 0) "album:$albumId" else "song:$id"
+        get() = when {
+            artworkPath != null -> "file:$artworkPath"
+            source == SongSource.MEDIA_STORE && albumId > 0 -> "album:$albumId"
+            else -> "song:$id"
+        }
 }
 
 @Immutable

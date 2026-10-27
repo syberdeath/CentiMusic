@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.centimusic.player.data.media.SongSort
 import kotlinx.coroutines.flow.Flow
@@ -26,12 +27,16 @@ data class UserPreferences(
     val resumeLastQueue: Boolean = true,
     val pauseOnDisconnect: Boolean = true,
     val skipSilence: Boolean = false,
+    /** Fade between songs, in seconds; 0 = off (gapless). */
+    val fadeSeconds: Int = 0,
     val ignoreShortTracks: Boolean = true,
     /** Let the visualizer stay over the keyguard while it is open (showWhenLocked). */
     val visualizerOnLockScreen: Boolean = false,
     /** Collapse the same song stored more than once into a single entry. */
     val hideDuplicates: Boolean = true,
     val pulseStyle: PulseStyle = PulseStyle.HALO,
+    /** Folders (relative paths) left out of the library, e.g. WhatsApp audio or recordings. */
+    val hiddenFolders: Set<String> = emptySet(),
 )
 
 /** Playback position bookkeeping for queue restoration. */
@@ -49,10 +54,12 @@ class PreferencesRepository(private val context: Context) {
         val resume = booleanPreferencesKey("resume_last_queue")
         val pauseOnDisconnect = booleanPreferencesKey("pause_on_disconnect")
         val skipSilence = booleanPreferencesKey("skip_silence")
+        val fadeSeconds = intPreferencesKey("fade_seconds")
         val ignoreShort = booleanPreferencesKey("ignore_short_tracks")
         val visualizerLock = booleanPreferencesKey("visualizer_on_lock_screen")
         val hideDuplicates = booleanPreferencesKey("hide_duplicates")
         val pulseStyle = stringPreferencesKey("pulse_style")
+        val hiddenFolders = stringSetPreferencesKey("hidden_folders")
         val resumeIndex = intPreferencesKey("resume_index")
         val resumePosition = longPreferencesKey("resume_position")
     }
@@ -67,10 +74,12 @@ class PreferencesRepository(private val context: Context) {
             resumeLastQueue = p[Keys.resume] ?: true,
             pauseOnDisconnect = p[Keys.pauseOnDisconnect] ?: true,
             skipSilence = p[Keys.skipSilence] ?: false,
+            fadeSeconds = p[Keys.fadeSeconds] ?: 0,
             ignoreShortTracks = p[Keys.ignoreShort] ?: true,
             visualizerOnLockScreen = p[Keys.visualizerLock] ?: false,
             hideDuplicates = p[Keys.hideDuplicates] ?: true,
             pulseStyle = p[Keys.pulseStyle]?.let { runCatching { PulseStyle.valueOf(it) }.getOrNull() } ?: PulseStyle.HALO,
+            hiddenFolders = p[Keys.hiddenFolders] ?: emptySet(),
         )
     }
 
@@ -82,10 +91,15 @@ class PreferencesRepository(private val context: Context) {
     suspend fun setResumeLastQueue(value: Boolean) = context.dataStore.edit { it[Keys.resume] = value }
     suspend fun setPauseOnDisconnect(value: Boolean) = context.dataStore.edit { it[Keys.pauseOnDisconnect] = value }
     suspend fun setSkipSilence(value: Boolean) = context.dataStore.edit { it[Keys.skipSilence] = value }
+    suspend fun setFadeSeconds(value: Int) = context.dataStore.edit { it[Keys.fadeSeconds] = value }
     suspend fun setIgnoreShortTracks(value: Boolean) = context.dataStore.edit { it[Keys.ignoreShort] = value }
     suspend fun setVisualizerOnLockScreen(value: Boolean) = context.dataStore.edit { it[Keys.visualizerLock] = value }
     suspend fun setHideDuplicates(value: Boolean) = context.dataStore.edit { it[Keys.hideDuplicates] = value }
     suspend fun setPulseStyle(style: PulseStyle) = context.dataStore.edit { it[Keys.pulseStyle] = style.name }
+    suspend fun setFolderHidden(folder: String, hidden: Boolean) = context.dataStore.edit {
+        val current = it[Keys.hiddenFolders] ?: emptySet()
+        it[Keys.hiddenFolders] = if (hidden) current + folder else current - folder
+    }
 
     suspend fun savePlaybackModes(shuffle: Boolean, repeatMode: Int) = context.dataStore.edit {
         it[Keys.shuffle] = shuffle

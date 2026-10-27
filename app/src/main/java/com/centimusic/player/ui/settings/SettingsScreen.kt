@@ -102,6 +102,9 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     fun setSkipSilence(v: Boolean) {
         viewModelScope.launch { prefs.setSkipSilence(v) }
     }
+    fun setFadeSeconds(seconds: Int) {
+        viewModelScope.launch { prefs.setFadeSeconds(seconds) }
+    }
     fun setPulseStyle(style: PulseStyle) {
         viewModelScope.launch { prefs.setPulseStyle(style) }
     }
@@ -195,6 +198,16 @@ fun SettingsScreen() {
             ToggleRow(NmIcons.Headphones, "Pause when audio disconnects", "Pause if headphones are unplugged or Bluetooth drops", prefs.pauseOnDisconnect, vm::setPauseOnDisconnect)
         }
         item {
+            NavigationRow(
+                NmIcons.Waveform,
+                "Fade between songs",
+                { dialog = SettingsDialog.Fade },
+                subtitle = "Fade out the end of a song and fade in the next",
+                value = if (prefs.fadeSeconds == 0) "Off" else "${prefs.fadeSeconds} s",
+                iconSize = 40.dp,
+            )
+        }
+        item {
             ToggleRow(NmIcons.Waveform, "Skip silence", "Trim silent passages during playback", prefs.skipSilence, vm::setSkipSilence)
         }
         item {
@@ -215,6 +228,16 @@ fun SettingsScreen() {
                 "Show one entry when the same song is stored more than once (same title, artist and length)",
                 prefs.hideDuplicates,
                 vm::setHideDuplicates,
+            )
+        }
+        item {
+            NavigationRow(
+                NmIcons.Folder,
+                "Hidden folders",
+                navigator::hiddenFolders,
+                subtitle = "Leave folders like WhatsApp audio out of your library",
+                value = if (prefs.hiddenFolders.isEmpty()) "None" else prefs.hiddenFolders.size.toString(),
+                iconSize = 40.dp,
             )
         }
         item {
@@ -292,6 +315,17 @@ fun SettingsScreen() {
             },
             onDismiss = { dialog = null },
         )
+        SettingsDialog.Fade -> ChoiceDialog(
+            title = "Fade between songs",
+            options = listOf(0, 2, 4, 6, 8),
+            selected = prefs.fadeSeconds,
+            label = { if (it == 0) "Off (gapless)" else "$it seconds" },
+            onSelect = {
+                vm.setFadeSeconds(it)
+                dialog = null
+            },
+            onDismiss = { dialog = null },
+        )
         SettingsDialog.Privacy -> InfoDialog(
             "Privacy",
             "CentiMusic works entirely offline. It reads audio files on this device to build your library, " +
@@ -303,7 +337,7 @@ fun SettingsScreen() {
     }
 }
 
-private enum class SettingsDialog { Theme, Pulse, Privacy, About }
+private enum class SettingsDialog { Theme, Pulse, Fade, Privacy, About }
 
 @Composable
 private fun GroupLabel(text: String) {

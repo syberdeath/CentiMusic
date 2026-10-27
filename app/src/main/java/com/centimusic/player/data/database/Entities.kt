@@ -70,3 +70,15 @@ data class SavedQueueEntity(
     @PrimaryKey val position: Int,
     val mediaId: String,
 )
+
+/** User edits to a song's info, applied on top of the file's tags inside CentiMusic only. */
+@Entity(tableName = "song_edits")
+data class SongEditEntity(
+    @PrimaryKey val mediaId: String,
+    val title: String?,
+    val artist: String?,
+    val album: String?,
+    /** Custom cover stored in the app's private files. */
+    val artworkPath: String?,
+    val updatedAt: Long,
+)

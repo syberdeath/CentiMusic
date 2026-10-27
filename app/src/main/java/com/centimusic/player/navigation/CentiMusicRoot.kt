@@ -63,7 +63,10 @@ import com.centimusic.player.ui.components.SongDeleteHost
 import com.centimusic.player.ui.components.SongDeleter
 import com.centimusic.player.ui.home.HomeScreen
 import com.centimusic.player.ui.library.AlbumsScreen
+import com.centimusic.player.ui.library.ArtistScreen
 import com.centimusic.player.ui.library.ArtistsScreen
+import com.centimusic.player.ui.library.HiddenFoldersScreen
+import com.centimusic.player.ui.edit.EditSongScreen
 import com.centimusic.player.ui.library.FoldersScreen
 import com.centimusic.player.ui.library.LibraryScreen
 import com.centimusic.player.ui.library.SongListScreen
@@ -173,8 +176,15 @@ private fun AppScaffold(
                 }
                 composable(Routes.ARTISTS) { ArtistsScreen() }
                 composable(Routes.ARTIST, arguments = listOf(navArgument("name") { type = NavType.StringType })) {
+                    ArtistScreen(it.stringArg("name"))
+                }
+                composable(Routes.ARTIST_SONGS, arguments = listOf(navArgument("name") { type = NavType.StringType })) {
                     SongListScreen(SongListSource.Artist(it.stringArg("name")))
                 }
+                composable(Routes.EDIT_SONG, arguments = listOf(navArgument("id") { type = NavType.StringType })) {
+                    EditSongScreen(it.stringArg("id"))
+                }
+                composable(Routes.HIDDEN_FOLDERS) { HiddenFoldersScreen() }
                 composable(Routes.FOLDERS) { FoldersScreen() }
                 composable(Routes.FOLDER, arguments = listOf(navArgument("path") { type = NavType.StringType })) {
                     SongListScreen(SongListSource.Folder(it.stringArg("path").let { p -> if (p == "/") "" else p }))

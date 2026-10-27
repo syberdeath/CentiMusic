@@ -121,6 +121,7 @@ fun SongActionsHost(controller: SongMenuController) {
                         close { message("Removed from playlist") }
                     }
                 }
+                SheetAction(NmIcons.Edit, "Edit info") { close { navigator.editSong(song.id) } }
                 SheetAction(NmIcons.Disc, "Go to album") { close { navigator.album(song.albumKey) } }
                 SheetAction(NmIcons.Person, "Go to artist") { close { navigator.artist(song.artist) } }
                 val deleter = LocalSongDeleter.current

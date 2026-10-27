@@ -60,6 +60,7 @@ object ArtworkLoader {
     private fun cacheKey(song: Song, sizePx: Int) = "${song.artworkKey}@${bucket(sizePx)}"
 
     private fun decode(context: Context, song: Song, size: Int): Bitmap? {
+        song.artworkPath?.let { path -> decodeFile(path, size)?.let { return it } }
         val resolver = context.contentResolver
         if (song.source == SongSource.MEDIA_STORE) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -73,6 +74,13 @@ object ArtworkLoader {
             }
         }
         return embeddedPicture(context, song.uri, size)
+    }
+
+    private fun decodeFile(path: String, size: Int): Bitmap? {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeFile(path, bounds)
+        if (bounds.outWidth <= 0) return null
+        return BitmapFactory.decodeFile(path, BitmapFactory.Options().apply { inSampleSize = sampleSize(bounds.outWidth, bounds.outHeight, size) })
     }
 
     private fun decodeStream(context: Context, uri: Uri, size: Int): Bitmap? {

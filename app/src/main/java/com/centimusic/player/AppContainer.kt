@@ -22,7 +22,7 @@ class AppContainer(context: Context) {
 
     val database: AppDatabase = AppDatabase.create(appContext)
     val preferences = PreferencesRepository(appContext)
-    val music = MusicRepository(appContext, database.importedTrackDao(), preferences, scope)
+    val music = MusicRepository(appContext, database.importedTrackDao(), database.songEditDao(), preferences, scope)
     val favorites = FavoritesRepository(database.favoriteDao(), scope)
     val playlists = PlaylistRepository(database.playlistDao(), music.library)
     val history = HistoryRepository(database.historyDao())

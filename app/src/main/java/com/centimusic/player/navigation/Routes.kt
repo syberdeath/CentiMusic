@@ -25,6 +25,9 @@ object Routes {
     const val PLAYER = "player"
     const val QUEUE = "queue"
     const val VISUALIZER = "visualizer"
+    const val EDIT_SONG = "edit/{id}"
+    const val HIDDEN_FOLDERS = "hidden-folders"
+    const val ARTIST_SONGS = "artist/{name}/songs"
 
     val tabs = listOf(HOME, SEARCH, LIBRARY)
 
@@ -61,4 +64,7 @@ class Navigator(private val nav: NavHostController) {
     fun player() = nav.navigate(Routes.PLAYER) { launchSingleTop = true }
     fun queue() = nav.navigate(Routes.QUEUE) { launchSingleTop = true }
     fun visualizer() = nav.navigate(Routes.VISUALIZER) { launchSingleTop = true }
+    fun editSong(id: String) = nav.navigate("edit/${Uri.encode(id)}")
+    fun hiddenFolders() = nav.navigate(Routes.HIDDEN_FOLDERS)
+    fun artistSongs(name: String) = nav.navigate("artist/${Uri.encode(name)}/songs")
 }

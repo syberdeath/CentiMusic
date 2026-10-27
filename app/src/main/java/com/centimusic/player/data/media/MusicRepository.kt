@@ -3,6 +3,11 @@ package com.centimusic.player.data.media
 import android.Manifest
 import android.app.RecoverableSecurityException
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import com.centimusic.player.data.database.SongEditDao
+import com.centimusic.player.data.database.SongEditEntity
+import java.io.File
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.os.Build
@@ -59,6 +64,7 @@ sealed interface ScanState {
 class MusicRepository(
     private val context: Context,
     private val importedDao: ImportedTrackDao,
+    private val editDao: SongEditDao,
     private val preferences: PreferencesRepository,
     private val scope: CoroutineScope,
 ) {
@@ -74,13 +80,86 @@ class MusicRepository(
     private val _permissionGranted = MutableStateFlow(AudioPermission.isGranted(context))
     val permissionGranted: StateFlow<Boolean> = _permissionGranted.asStateFlow()
 
+    private val importedSongs = importedDao.observeAll().map { rows -> rows.map { it.toSong() } }
+        .stateIn(scope, SharingStarted.Eagerly, emptyList())
+
+    /** Every folder that contains music, hidden or not, with its song count (for "Hidden folders"). */
+    val allFolders: StateFlow<List<Pair<String, Int>>> = combine(mediaStoreSongs, importedSongs) { stored, imported ->
+        (stored + imported).groupingBy { it.folder }.eachCount().toList().sortedBy { it.first.lowercase() }
+    }.flowOn(Dispatchers.Default).stateIn(scope, SharingStarted.Eagerly, emptyList())
+
     val library: StateFlow<Library> = combine(
         mediaStoreSongs,
-        importedDao.observeAll().map { rows -> rows.map { it.toSong() } },
-        preferences.preferences.map { it.hideDuplicates }.distinctUntilChanged(),
-    ) { stored, imported, hideDuplicates -> Library.from(stored + imported, hideDuplicates) }
+        importedSongs,
+        preferences.preferences.map { it.hideDuplicates to it.hiddenFolders }.distinctUntilChanged(),
+        editDao.observeAll(),
+    ) { stored, imported, (hideDuplicates, hiddenFolders), edits ->
+        val byId = edits.associateBy { it.mediaId }
+        val visible = (stored + imported)
+            .filterNot { it.folder in hiddenFolders }
+            .map { song -> byId[song.id]?.let { song.withEdit(it) } ?: song }
+        Library.from(visible, hideDuplicates)
+    }
         .flowOn(Dispatchers.Default)
         .stateIn(scope, SharingStarted.Eagerly, Library())
+
+    /** The song as tagged in the file, before any edit made in CentiMusic. */
+    fun original(id: String): Song? =
+        mediaStoreSongs.value.firstOrNull { it.id == id } ?: importedSongs.value.firstOrNull { it.id == id }
+
+    suspend fun edit(id: String): SongEditEntity? = editDao.get(id)
+
+    /**
+     * Saves info edits for [id]. Blank fields fall back to the file's tags. [newCover] is copied
+     * (downscaled) into app storage; [removeCover] drops a previously chosen cover.
+     */
+    suspend fun saveEdit(id: String, title: String, artist: String, album: String, newCover: Uri?, removeCover: Boolean) =
+        withContext(Dispatchers.IO) {
+            val previous = editDao.get(id)
+            var artworkPath = previous?.artworkPath
+            if (removeCover || newCover != null) {
+                artworkPath?.let { File(it).delete() }
+                artworkPath = null
+            }
+            if (newCover != null) artworkPath = copyCover(id, newCover)
+            val original = original(id)
+            fun keep(value: String, originalValue: String?) = value.trim().takeIf { it.isNotEmpty() && it != originalValue }
+            val entity = SongEditEntity(
+                mediaId = id,
+                title = keep(title, original?.title),
+                artist = keep(artist, original?.artist),
+                album = keep(album, original?.album),
+                artworkPath = artworkPath,
+                updatedAt = System.currentTimeMillis(),
+            )
+            if (entity.title == null && entity.artist == null && entity.album == null && entity.artworkPath == null) {
+                editDao.delete(id)
+            } else {
+                editDao.upsert(entity)
+            }
+            ArtworkLoader.clear()
+        }
+
+    suspend fun resetEdit(id: String) = withContext(Dispatchers.IO) {
+        editDao.get(id)?.artworkPath?.let { File(it).delete() }
+        editDao.delete(id)
+        ArtworkLoader.clear()
+    }
+
+    private fun copyCover(id: String, source: Uri): String? = runCatching {
+        val resolver = context.contentResolver
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        resolver.openInputStream(source)?.use { BitmapFactory.decodeStream(it, null, bounds) }
+        var sample = 1
+        while (bounds.outWidth / (sample * 2) >= 1024 && bounds.outHeight / (sample * 2) >= 1024) sample *= 2
+        val bitmap = resolver.openInputStream(source)?.use {
+            BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply { inSampleSize = sample })
+        } ?: return@runCatching null
+        val dir = File(context.filesDir, "artwork").apply { mkdirs() }
+        val file = File(dir, "${id.hashCode().toUInt()}-${System.currentTimeMillis()}.jpg")
+        file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.JPEG, 90, it) }
+        file.absolutePath
+    }.getOrNull()
 
     private val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
         override fun onChange(selfChange: Boolean) = scheduleRescan()
@@ -235,3 +314,12 @@ sealed interface DeleteResult {
     data object NeedsWritePermission : DeleteResult
     data class Failed(val reason: String) : DeleteResult
 }
+
+/** Applies a CentiMusic edit on top of the file's tags. A new album name regroups the song by name. */
+internal fun Song.withEdit(edit: SongEditEntity): Song = copy(
+    title = edit.title ?: title,
+    artist = edit.artist ?: artist,
+    album = edit.album ?: album,
+    albumId = if (edit.album != null) 0 else albumId,
+    artworkPath = edit.artworkPath ?: artworkPath,
+)
