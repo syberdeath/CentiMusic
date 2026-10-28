@@ -111,6 +111,15 @@ interface HistoryDao {
 
     @Query("DELETE FROM play_history WHERE mediaId = :mediaId")
     suspend fun deletePlay(mediaId: String)
+
+    @Insert
+    suspend fun insertListen(entry: ListenEntity)
+
+    @Query("SELECT * FROM listens WHERE playedAt >= :since")
+    fun observeListensSince(since: Long): Flow<List<ListenEntity>>
+
+    @Query("DELETE FROM listens WHERE playedAt < :before")
+    suspend fun pruneListens(before: Long)
 }
 
 @Dao

@@ -68,6 +68,7 @@ import com.centimusic.player.ui.theme.Spacing
 fun HomeScreen() {
     val vm = appViewModel { HomeViewModel(it) }
     val state by vm.state.collectAsStateWithLifecycle()
+    val week by vm.week.collectAsStateWithLifecycle()
     val access = LocalLibraryAccess.current
     val navigator = LocalNavigator.current
     val player = LocalAppContainer.current.player
@@ -138,20 +139,13 @@ fun HomeScreen() {
                         PillButton("All ${state.songCount} songs", navigator::songs, trailingIcon = NmIcons.ChevronRight)
                     }
                     Spacer(Modifier.height(Spacing.m))
+                    // Nothing-style widget pair: clock and this week's listening.
                     Row(
                         Modifier.padding(horizontal = Spacing.gutter),
                         horizontalArrangement = Arrangement.spacedBy(Spacing.m),
                     ) {
-                        StatTile(NmIcons.Waveform, state.songCount.toString(), "Songs", navigator::songs, Modifier.weight(1f), height = 104.dp)
-                        StatTile(
-                            NmIcons.HeartFilled,
-                            state.likedCount.toString(),
-                            "Liked",
-                            navigator::liked,
-                            Modifier.weight(1f),
-                            iconTint = NmTheme.colors.accent,
-                            height = 104.dp,
-                        )
+                        ClockWidget(Modifier.weight(1f))
+                        WeekWidget(week, onClick = navigator::recentlyPlayed, modifier = Modifier.weight(1f))
                     }
                     Spacer(Modifier.height(Spacing.m))
                 }
@@ -172,35 +166,44 @@ fun HomeScreen() {
                         Spacer(Modifier.height(Spacing.xxl))
                     }
                 }
+                // Shelves are numbered in order, like a spec sheet: 01 Recently Played, 02 Most Played…
+                val shelves = listOfNotNull(
+                    "played".takeIf { state.recentlyPlayed.isNotEmpty() },
+                    "most".takeIf { state.mostPlayed.isNotEmpty() },
+                    "liked".takeIf { state.liked.isNotEmpty() },
+                    "added",
+                    "albums".takeIf { state.albums.size > 1 },
+                )
+                fun number(key: String) = shelves.indexOf(key) + 1
                 if (state.recentlyPlayed.isNotEmpty()) {
                     item(key = "played") {
-                        SongShelf("Recently Played", state.recentlyPlayed, onSeeAll = navigator::recentlyPlayed) { index ->
+                        SongShelf("Recently Played", state.recentlyPlayed, onSeeAll = navigator::recentlyPlayed, number = number("played")) { index ->
                             player.play(state.recentlyPlayed, index)
                         }
                     }
                 }
                 if (state.mostPlayed.isNotEmpty()) {
                     item(key = "most") {
-                        SongShelf("Most Played", state.mostPlayed, onSeeAll = null) { index ->
+                        SongShelf("Most Played", state.mostPlayed, onSeeAll = null, number = number("most")) { index ->
                             player.play(state.mostPlayed, index)
                         }
                     }
                 }
                 if (state.liked.isNotEmpty()) {
                     item(key = "liked") {
-                        SongShelf("Liked Songs", state.liked, onSeeAll = navigator::liked) { index ->
+                        SongShelf("Liked Songs", state.liked, onSeeAll = navigator::liked, number = number("liked")) { index ->
                             player.play(state.liked, index)
                         }
                     }
                 }
                 item(key = "added") {
-                    SongShelf("Recently Added", state.recentlyAdded, onSeeAll = navigator::recentlyAdded) { index ->
+                    SongShelf("Recently Added", state.recentlyAdded, onSeeAll = navigator::recentlyAdded, number = number("added")) { index ->
                         player.play(state.recentlyAdded, index)
                     }
                 }
                 if (state.albums.size > 1) {
                     item(key = "albums") {
-                        SectionHeader("Albums", action = "See all", onAction = navigator::albums)
+                        SectionHeader("Albums", action = "See all", onAction = navigator::albums, number = number("albums"))
                         Spacer(Modifier.height(Spacing.s))
                         LazyRow(
                             contentPadding = PaddingValues(horizontal = Spacing.gutter),
@@ -248,9 +251,6 @@ private fun Hero(compact: Boolean, onSettings: () -> Unit, modifier: Modifier = 
                 // Once there's history, greet by name instead of the tagline.
                 val prefsFlow = LocalAppContainer.current.preferences.preferences
                 val name by remember(prefsFlow) { prefsFlow.map { it.greetingName } }.collectAsStateWithLifecycle(initialValue = "")
-                val today = remember { java.text.SimpleDateFormat("EEE d MMM", java.util.Locale.getDefault()).format(java.util.Date()) }
-                Text(today.uppercase(), style = NmTheme.type.dotCaption, color = colors.textTertiary)
-                Spacer(Modifier.height(Spacing.s))
                 Text(
                     (if (name.isBlank()) timeOfDayGreeting() else "${timeOfDayGreeting()},\n${name.trim()}").uppercase(),
                     style = NmTheme.type.hero.copy(fontSize = 30.sp, lineHeight = 33.sp),
@@ -272,8 +272,8 @@ private fun Hero(compact: Boolean, onSettings: () -> Unit, modifier: Modifier = 
 }
 
 @Composable
-private fun SongShelf(title: String, songs: List<Song>, onSeeAll: (() -> Unit)?, onPlay: (Int) -> Unit) {
-    SectionHeader(title, action = if (onSeeAll != null) "See all" else null, onAction = onSeeAll)
+private fun SongShelf(title: String, songs: List<Song>, onSeeAll: (() -> Unit)?, number: Int? = null, onPlay: (Int) -> Unit) {
+    SectionHeader(title, action = if (onSeeAll != null) "See all" else null, onAction = onSeeAll, number = number)
     Spacer(Modifier.height(Spacing.s))
     LazyRow(
         contentPadding = PaddingValues(horizontal = Spacing.gutter),

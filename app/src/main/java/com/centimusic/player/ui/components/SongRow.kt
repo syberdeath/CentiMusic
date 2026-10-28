@@ -58,25 +58,32 @@ fun SongRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (index != null) {
-            Text(
-                index.toString(),
-                style = NmTheme.type.caption,
-                color = colors.textTertiary,
-                modifier = Modifier.width(24.dp),
-            )
+            Box(Modifier.width(24.dp)) {
+                if (isCurrent && !showArtwork) {
+                    PlayingDots()
+                } else {
+                    Text(
+                        index.toString().padStart(2, '0'),
+                        style = NmTheme.type.dotCaption,
+                        color = colors.textTertiary,
+                    )
+                }
+            }
         }
         if (showArtwork) {
             Box {
                 Artwork(song, Modifier.size(48.dp), corner = Spacing.thumbCorner, sizeHint = 48.dp)
                 if (isCurrent) {
+                    // Playing: the cover dims behind a little red dot equalizer.
                     Box(
                         Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(4.dp)
-                            .size(7.dp)
-                            .clip(CircleShape)
-                            .background(colors.accent),
-                    )
+                            .size(48.dp)
+                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(Spacing.thumbCorner))
+                            .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.55f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        PlayingDots(dot = 3.5.dp)
+                    }
                 }
             }
             Spacer(Modifier.width(Spacing.m))

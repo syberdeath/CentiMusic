@@ -27,6 +27,8 @@ data class HomeUiState(
     val albums: List<Album> = emptyList(),
 )
 
+data class WeekStats(val plays: List<Int>, val dayLabels: List<String>, val minutes: Int)
+
 class HomeViewModel(private val container: AppContainer) : ViewModel() {
     val state: StateFlow<HomeUiState> = combine(
         container.music.library,
@@ -49,6 +51,30 @@ class HomeViewModel(private val container: AppContainer) : ViewModel() {
         )
     }.flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())
+
+    /** Plays per day for the last seven days (oldest first) and the minutes they add up to. */
+    val week: StateFlow<WeekStats> = run {
+        val days = (0..6).map { back ->
+            java.util.Calendar.getInstance().apply {
+                set(java.util.Calendar.HOUR_OF_DAY, 0); set(java.util.Calendar.MINUTE, 0)
+                set(java.util.Calendar.SECOND, 0); set(java.util.Calendar.MILLISECOND, 0)
+                add(java.util.Calendar.DAY_OF_YEAR, back - 6)
+            }
+        }
+        val starts = days.map { it.timeInMillis }
+        val labels = days.map { it.getDisplayName(java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.SHORT, java.util.Locale.getDefault()).orEmpty().take(1).uppercase() }
+        combine(container.history.listensSince(starts.first()), container.music.library) { listens, library ->
+            val counts = IntArray(7)
+            var ms = 0L
+            listens.forEach { l ->
+                val day = starts.indexOfLast { l.playedAt >= it }
+                if (day >= 0) counts[day]++
+                ms += library.byId[l.mediaId]?.durationMs ?: 0L
+            }
+            WeekStats(counts.toList(), labels, (ms / 60_000).toInt())
+        }.flowOn(Dispatchers.Default)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), WeekStats(List(7) { 0 }, labels, 0))
+    }
 
     fun rescan() = viewModelScope.launch { container.music.rescan() }
 }

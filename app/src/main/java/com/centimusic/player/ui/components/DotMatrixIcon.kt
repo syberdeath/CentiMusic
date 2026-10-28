@@ -93,3 +93,30 @@ fun DotMatrixIcon(
         drawCircle(accent, radius = r * 1.25f, center = Offset(step * (grid - 0.5f), step * 0.5f))
     }
 }
+
+/** Tiny 3-column dot equalizer marking the song that's playing, in place of a static dot. */
+@Composable
+fun PlayingDots(modifier: Modifier = Modifier, color: Color = NmTheme.colors.accent, dot: Dp = 3.dp) {
+    val phase by rememberInfiniteTransition(label = "playing").animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(900, easing = LinearEasing)),
+        label = "phase",
+    )
+    val rows = 4
+    Canvas(modifier.size(width = dot * 5, height = dot * (rows * 2 - 1))) {
+        val d = dot.toPx()
+        for (c in 0 until 3) {
+            val wave = 0.5f + 0.5f * sin(2f * PI.toFloat() * (phase + c * 0.33f))
+            val lit = 1 + (wave * (rows - 1)).toInt()
+            for (r in 0 until rows) {
+                drawCircle(
+                    color,
+                    radius = d / 2,
+                    center = Offset(d / 2 + c * 2 * d, size.height - d / 2 - r * 2 * d),
+                    alpha = if (r < lit) 1f else 0.18f,
+                )
+            }
+        }
+    }
+}

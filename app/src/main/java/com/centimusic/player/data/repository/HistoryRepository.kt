@@ -1,6 +1,7 @@
 package com.centimusic.player.data.repository
 
 import com.centimusic.player.data.database.HistoryDao
+import com.centimusic.player.data.database.ListenEntity
 import com.centimusic.player.data.database.PlayHistoryEntity
 import com.centimusic.player.data.database.SearchHistoryEntity
 import kotlinx.coroutines.flow.Flow
@@ -24,7 +25,13 @@ class HistoryRepository(private val dao: HistoryDao) {
     suspend fun clearSearches() = dao.clearSearches()
 
     suspend fun recordPlay(mediaId: String) {
+        val now = System.currentTimeMillis()
         val count = dao.playEntry(mediaId)?.playCount ?: 0
-        dao.upsertPlay(PlayHistoryEntity(mediaId, System.currentTimeMillis(), count + 1))
+        dao.upsertPlay(PlayHistoryEntity(mediaId, now, count + 1))
+        dao.insertListen(ListenEntity(mediaId = mediaId, playedAt = now))
+        dao.pruneListens(now - 60L * 24 * 60 * 60 * 1000)
     }
+
+    /** Every play since [sinceMs]. */
+    fun listensSince(sinceMs: Long): Flow<List<ListenEntity>> = dao.observeListensSince(sinceMs)
 }

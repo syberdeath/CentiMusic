@@ -82,3 +82,11 @@ data class SongEditEntity(
     val artworkPath: String?,
     val updatedAt: Long,
 )
+
+/** One row per play, for the weekly listening chart (play_history keeps only totals). */
+@Entity(tableName = "listens", indices = [Index("playedAt")])
+data class ListenEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val mediaId: String,
+    val playedAt: Long,
+)

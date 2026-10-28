@@ -66,6 +66,7 @@ import com.centimusic.player.data.media.AudioPermission
 import com.centimusic.player.data.preferences.UserPreferences
 import com.centimusic.player.ui.components.BottomNavBar
 import com.centimusic.player.ui.components.dotGrid
+import com.centimusic.player.ui.components.GlyphToast
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -282,11 +283,7 @@ private fun AppScaffold(
                 .fillMaxWidth(),
         ) {
             SnackbarHost(snackbar, Modifier.padding(horizontal = Spacing.l)) { data ->
-                Snackbar(
-                    containerColor = colors.inverse,
-                    contentColor = colors.onInverse,
-                    shape = RoundedCornerShape(14.dp),
-                ) { Text(data.visuals.message, style = NmTheme.type.bodySmall) }
+                GlyphToast(data.visuals.message)
             }
             AnimatedVisibility(
                 visible = showChrome,

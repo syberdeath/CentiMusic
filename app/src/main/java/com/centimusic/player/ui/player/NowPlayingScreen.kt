@@ -99,6 +99,7 @@ fun NowPlayingScreen() {
     val message = LocalMessenger.current
     val prefs by container.preferences.preferences.collectAsStateWithLifecycle(initialValue = UserPreferences())
     val currentPulseStyle by rememberUpdatedState(prefs.pulseStyle)
+    val currentGlyph by rememberUpdatedState(prefs.glyphArtwork)
     var showPulsePicker by remember { mutableStateOf(false) }
     val swipeX = remember { Animatable(0f) }
     val swipeY = remember { Animatable(0f) }
@@ -157,6 +158,13 @@ fun NowPlayingScreen() {
                 // Double-tap the artwork to try the next pulse style.
                 .pointerInput(Unit) {
                     detectTapGestures(
+                        // Tap the artwork to switch between the photo and the Glyph Matrix.
+                        onTap = {
+                            haptics.tick()
+                            val glyph = !currentGlyph
+                            scope.launch { container.preferences.setGlyphArtwork(glyph) }
+                            message(if (glyph) "Glyph Matrix" else "Artwork")
+                        },
                         onDoubleTap = {
                             val next = currentPulseStyle.next()
                             haptics.confirm()
@@ -235,6 +243,15 @@ fun NowPlayingScreen() {
                             contentKey = { it.id },
                             label = "artwork",
                         ) { current ->
+                            if (prefs.glyphArtwork) {
+                                GlyphMatrixArt(
+                                    song = current,
+                                    level = { pulse.level },
+                                    progress = { if (playback.durationMs > 0) position.toFloat() / playback.durationMs else 0f },
+                                    timeSec = { motion.phase },
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                            } else {
                             // Circular, so it sits fully inside the pulse ring like a record.
                             Artwork(
                                 current,
@@ -252,6 +269,7 @@ fun NowPlayingScreen() {
                                     translationY = size.height * 0.035f * cos(t * 0.17f)
                                 },
                             )
+                            }
                         }
                     }
                 }

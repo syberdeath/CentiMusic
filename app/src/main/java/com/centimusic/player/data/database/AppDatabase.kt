@@ -17,8 +17,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         ImportedTrackEntity::class,
         SavedQueueEntity::class,
         SongEditEntity::class,
+        ListenEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -33,8 +34,19 @@ abstract class AppDatabase : RoomDatabase() {
         fun create(context: Context): AppDatabase =
             // File name predates the CentiMusic rename; kept so existing installs keep their playlists.
             Room.databaseBuilder(context, AppDatabase::class.java, "nothing_music.db")
-                .addMigrations(MIGRATION_1_2)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .build()
+
+        /** v3 adds listens, a per-play log for the weekly chart. */
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `listens` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`mediaId` TEXT NOT NULL, `playedAt` INTEGER NOT NULL)",
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_listens_playedAt` ON `listens` (`playedAt`)")
+            }
+        }
 
         /** v2 adds song_edits; everything else (playlists, likes, history) is kept. */
         private val MIGRATION_1_2 = object : Migration(1, 2) {

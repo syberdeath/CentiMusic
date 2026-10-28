@@ -223,7 +223,14 @@ fun StatTile(
 
 /** "Recently Played ........ See all" */
 @Composable
-fun SectionHeader(title: String, modifier: Modifier = Modifier, action: String? = null, onAction: (() -> Unit)? = null) {
+fun SectionHeader(
+    title: String,
+    modifier: Modifier = Modifier,
+    action: String? = null,
+    onAction: (() -> Unit)? = null,
+    /** Spec-sheet numbering, "01", "02"…, shown before the title. */
+    number: Int? = null,
+) {
     Row(
         modifier
             .fillMaxWidth()
@@ -237,6 +244,14 @@ fun SectionHeader(title: String, modifier: Modifier = Modifier, action: String? 
                 .background(NmTheme.colors.accent),
         )
         Spacer(Modifier.width(Spacing.s))
+        if (number != null) {
+            Text(
+                number.toString().padStart(2, '0'),
+                style = NmTheme.type.dotCaption,
+                color = NmTheme.colors.textTertiary,
+                modifier = Modifier.padding(end = Spacing.s),
+            )
+        }
         Text(title, style = NmTheme.type.sectionTitle, color = NmTheme.colors.textPrimary, modifier = Modifier.weight(1f))
         if (action != null && onAction != null) {
             Text(

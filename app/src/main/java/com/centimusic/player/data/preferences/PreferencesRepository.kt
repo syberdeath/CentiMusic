@@ -44,6 +44,8 @@ data class UserPreferences(
     val lastFullSplashDay: String = "",
     /** Play the full launch animation every time instead of the quick one after the first launch of the day. */
     val alwaysFullSplash: Boolean = false,
+    /** Now Playing shows the artwork as a round Glyph-style dot matrix instead of the photo. */
+    val glyphArtwork: Boolean = false,
 )
 
 /** Playback position bookkeeping for queue restoration. */
@@ -71,6 +73,7 @@ class PreferencesRepository(private val context: Context) {
         val greetingName = stringPreferencesKey("greeting_name")
         val lastFullSplashDay = stringPreferencesKey("last_full_splash_day")
         val alwaysFullSplash = booleanPreferencesKey("always_full_splash")
+        val glyphArtwork = booleanPreferencesKey("glyph_artwork")
         val resumeIndex = intPreferencesKey("resume_index")
         val resumePosition = longPreferencesKey("resume_position")
     }
@@ -95,6 +98,7 @@ class PreferencesRepository(private val context: Context) {
             greetingName = p[Keys.greetingName] ?: "Vincent",
             lastFullSplashDay = p[Keys.lastFullSplashDay] ?: "",
             alwaysFullSplash = p[Keys.alwaysFullSplash] ?: false,
+            glyphArtwork = p[Keys.glyphArtwork] ?: false,
         )
     }
 
@@ -115,6 +119,7 @@ class PreferencesRepository(private val context: Context) {
     suspend fun setGreetingName(value: String) = context.dataStore.edit { it[Keys.greetingName] = value.trim() }
     suspend fun setLastFullSplashDay(value: String) = context.dataStore.edit { it[Keys.lastFullSplashDay] = value }
     suspend fun setAlwaysFullSplash(value: Boolean) = context.dataStore.edit { it[Keys.alwaysFullSplash] = value }
+    suspend fun setGlyphArtwork(value: Boolean) = context.dataStore.edit { it[Keys.glyphArtwork] = value }
     suspend fun setFolderHidden(folder: String, hidden: Boolean) = context.dataStore.edit {
         val current = it[Keys.hiddenFolders] ?: emptySet()
         it[Keys.hiddenFolders] = if (hidden) current + folder else current - folder
