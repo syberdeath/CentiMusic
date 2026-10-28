@@ -37,51 +37,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-private val WidgetHeight = 156.dp
-
-/** Nothing-style clock widget: big dot-matrix time with a blinking red colon, date underneath. */
-@Composable
-fun ClockWidget(modifier: Modifier = Modifier) {
-    val colors = NmTheme.colors
-    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            now = System.currentTimeMillis()
-            delay(1_000 - now % 1_000)
-        }
-    }
-    val is24 = android.text.format.DateFormat.is24HourFormat(androidx.compose.ui.platform.LocalContext.current)
-    val date = Date(now)
-    val hours = SimpleDateFormat(if (is24) "HH" else "hh", Locale.getDefault()).format(date)
-    val minutes = SimpleDateFormat("mm", Locale.getDefault()).format(date)
-    val day = SimpleDateFormat("EEE d", Locale.getDefault()).format(date).uppercase()
-    val colonOn = (now / 1_000) % 2 == 0L
-    Column(
-        modifier
-            .height(WidgetHeight)
-            .clip(RoundedCornerShape(24.dp))
-            .background(colors.surface)
-            .padding(Spacing.l),
-        verticalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(day, style = NmTheme.type.dotCaption, color = colors.textSecondary, modifier = Modifier.weight(1f))
-            if (!is24) {
-                Text(SimpleDateFormat("a", Locale.US).format(date), style = NmTheme.type.dotCaption, color = colors.textTertiary)
-            }
-        }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            val big = NmTheme.type.hero.copy(fontSize = 40.sp, lineHeight = 42.sp)
-            Text(hours, style = big, color = colors.textPrimary)
-            Column(Modifier.padding(horizontal = 5.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                repeat(2) {
-                    Box(Modifier.size(7.dp).clip(CircleShape).background(if (colonOn) colors.accent else colors.accent.copy(alpha = 0.18f)))
-                }
-            }
-            Text(minutes, style = big, color = colors.textPrimary)
-        }
-    }
-}
+private val WidgetHeight = 140.dp
 
 /** Week-at-a-glance widget: one dotted column per day, today's column topped in red. */
 @Composable

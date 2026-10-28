@@ -139,14 +139,8 @@ fun HomeScreen() {
                         PillButton("All ${state.songCount} songs", navigator::songs, trailingIcon = NmIcons.ChevronRight)
                     }
                     Spacer(Modifier.height(Spacing.m))
-                    // Nothing-style widget pair: clock and this week's listening.
-                    Row(
-                        Modifier.padding(horizontal = Spacing.gutter),
-                        horizontalArrangement = Arrangement.spacedBy(Spacing.m),
-                    ) {
-                        ClockWidget(Modifier.weight(1f))
-                        WeekWidget(week, onClick = navigator::recentlyPlayed, modifier = Modifier.weight(1f))
-                    }
+                    // Nothing-style widget: this week's listening.
+                    WeekWidget(week, onClick = navigator::recentlyPlayed, modifier = Modifier.padding(horizontal = Spacing.gutter).fillMaxWidth())
                     Spacer(Modifier.height(Spacing.m))
                 }
                 val resumeSong = playback.current ?: state.recentlyPlayed.firstOrNull()
