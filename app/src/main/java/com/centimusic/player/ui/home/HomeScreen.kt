@@ -55,6 +55,7 @@ import com.centimusic.player.ui.components.LoadingState
 import com.centimusic.player.ui.components.NmIconButton
 import com.centimusic.player.ui.components.PillButton
 import com.centimusic.player.ui.components.SectionHeader
+import com.centimusic.player.ui.components.StatTile
 import com.centimusic.player.ui.components.bottomContentPadding
 import com.centimusic.player.ui.theme.NmIcons
 import com.centimusic.player.ui.theme.NmTheme
@@ -132,6 +133,22 @@ fun HomeScreen() {
                     ) {
                         PillButton("Shuffle all", { player.shuffle(state.allSongs) }, icon = NmIcons.Shuffle, filled = true)
                         PillButton("All ${state.songCount} songs", navigator::songs, trailingIcon = NmIcons.ChevronRight)
+                    }
+                    Spacer(Modifier.height(Spacing.m))
+                    Row(
+                        Modifier.padding(horizontal = Spacing.gutter),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.m),
+                    ) {
+                        StatTile(NmIcons.Waveform, state.songCount.toString(), "Songs", navigator::songs, Modifier.weight(1f), height = 104.dp)
+                        StatTile(
+                            NmIcons.HeartFilled,
+                            state.likedCount.toString(),
+                            "Liked",
+                            navigator::liked,
+                            Modifier.weight(1f),
+                            iconTint = NmTheme.colors.accent,
+                            height = 104.dp,
+                        )
                     }
                     Spacer(Modifier.height(Spacing.m))
                 }

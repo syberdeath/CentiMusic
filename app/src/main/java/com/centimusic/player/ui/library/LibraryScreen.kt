@@ -1,6 +1,13 @@
 package com.centimusic.player.ui.library
 
 import androidx.compose.foundation.layout.Arrangement
+import com.centimusic.player.ui.theme.NmTheme
+import com.centimusic.player.ui.components.StatTile
+import com.centimusic.player.ui.components.Kicker
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -98,13 +105,29 @@ fun LibraryScreen() {
                 )
             }
         }
-        item { NavigationRow(NmIcons.HeartFilled, "Liked Songs", navigator::liked, subtitle = state.liked.pluralSongs()) }
-        item { NavigationRow(NmIcons.Note, "Playlists", navigator::playlists, subtitle = plural(state.playlists, "playlist")) }
-        item { NavigationRow(NmIcons.Disc, "Albums", navigator::albums, subtitle = plural(state.albums, "album")) }
-        item { NavigationRow(NmIcons.Person, "Artists", navigator::artists, subtitle = plural(state.artists, "artist")) }
-        item { NavigationRow(NmIcons.Waveform, "All Songs", navigator::songs, subtitle = state.songs.pluralSongs()) }
-        item { NavigationRow(NmIcons.Folder, "Folders", navigator::folders, subtitle = plural(state.folders, "folder")) }
-        item { NavigationRow(NmIcons.Clock, "Recently Played", navigator::recentlyPlayed, subtitle = "Your listening history") }
+        item {
+            Kicker("Collection", Modifier.padding(horizontal = Spacing.gutter, vertical = Spacing.s))
+            // Nothing-style widget grid.
+            val accent = NmTheme.colors.accent
+            Column(
+                Modifier.padding(horizontal = Spacing.gutter),
+                verticalArrangement = Arrangement.spacedBy(Spacing.m),
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.m)) {
+                    StatTile(NmIcons.HeartFilled, state.liked.toString(), "Liked songs", navigator::liked, Modifier.weight(1f), iconTint = accent)
+                    StatTile(NmIcons.Note, state.playlists.toString(), "Playlists", navigator::playlists, Modifier.weight(1f))
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.m)) {
+                    StatTile(NmIcons.Disc, state.albums.toString(), "Albums", navigator::albums, Modifier.weight(1f))
+                    StatTile(NmIcons.Person, state.artists.toString(), "Artists", navigator::artists, Modifier.weight(1f))
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.m)) {
+                    StatTile(NmIcons.Waveform, state.songs.toString(), "All songs", navigator::songs, Modifier.weight(1f))
+                    StatTile(NmIcons.Folder, state.folders.toString(), "Folders", navigator::folders, Modifier.weight(1f))
+                }
+                StatTile(NmIcons.Clock, "Recent", "Recently played", navigator::recentlyPlayed, Modifier.fillMaxWidth(), height = 96.dp)
+            }
+        }
 
         if (state.recentAlbums.isNotEmpty()) {
             item {

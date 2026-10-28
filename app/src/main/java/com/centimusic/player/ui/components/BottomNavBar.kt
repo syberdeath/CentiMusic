@@ -1,6 +1,16 @@
 package com.centimusic.player.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -33,37 +43,60 @@ private val tabs = listOf(
     Tab(Routes.LIBRARY, "Library", NmIcons.Library),
 )
 
+/**
+ * Floating Nothing-style dock: a rounded capsule of icons, the active tab marked by a red dot.
+ */
 @Composable
 fun BottomNavBar(selectedTab: String?, onSelect: (String) -> Unit, modifier: Modifier = Modifier) {
     val colors = NmTheme.colors
-    Column(modifier.background(colors.background)) {
-        NmDivider()
+    val haptics = rememberHaptics()
+    Box(
+        modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(top = 6.dp, bottom = 10.dp),
+        contentAlignment = Alignment.Center,
+    ) {
         Row(
             Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .height(64.dp),
+                .width(232.dp)
+                .height(60.dp)
+                .clip(RoundedCornerShape(30.dp))
+                .background(colors.surface),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             tabs.forEach { tab ->
                 val selected = tab.route == selectedTab
-                val tint = if (selected) colors.accent else colors.textSecondary
                 Column(
                     Modifier
                         .weight(1f)
-                        .height(64.dp)
+                        .height(60.dp)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
-                            indication = ripple(bounded = false, radius = 36.dp),
+                            indication = ripple(bounded = false, radius = 30.dp),
                             role = Role.Tab,
-                        ) { onSelect(tab.route) },
+                        ) {
+                            if (!selected) haptics.tick()
+                            onSelect(tab.route)
+                        }
+                        .semantics { contentDescription = tab.label; this.selected = selected },
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
-                    Icon(tab.icon, contentDescription = null, tint = tint, modifier = Modifier.size(22.dp))
-                    Spacer(Modifier.height(4.dp))
-                    Text(tab.label, style = NmTheme.type.dotCaption, color = tint)
+                    Icon(
+                        tab.icon,
+                        contentDescription = null,
+                        tint = if (selected) colors.textPrimary else colors.textTertiary,
+                        modifier = Modifier.size(22.dp),
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Box(
+                        Modifier
+                            .size(5.dp)
+                            .clip(CircleShape)
+                            .background(if (selected) colors.accent else Color.Transparent),
+                    )
                 }
             }
         }

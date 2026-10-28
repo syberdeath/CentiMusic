@@ -30,6 +30,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
@@ -128,7 +130,95 @@ fun PillButton(
 
 @Composable
 fun NmDivider(modifier: Modifier = Modifier, startIndent: Dp = 0.dp) {
-    HorizontalDivider(modifier.padding(start = startIndent), thickness = 0.5.dp, color = NmTheme.colors.divider)
+    // Nothing OS-style dotted rule.
+    val color = NmTheme.colors.textPrimary
+    androidx.compose.foundation.Canvas(
+        modifier
+            .padding(start = startIndent)
+            .fillMaxWidth()
+            .height(2.dp),
+    ) {
+        val step = 5.dp.toPx()
+        val r = 0.7.dp.toPx()
+        var x = r
+        while (x < size.width) {
+            drawCircle(color, radius = r, center = androidx.compose.ui.geometry.Offset(x, size.height / 2), alpha = 0.22f)
+            x += step
+        }
+    }
+}
+
+/** Small uppercase dot-matrix label with a red dot: "● COLLECTION". */
+@Composable
+fun Kicker(text: String, modifier: Modifier = Modifier) {
+    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            Modifier
+                .size(6.dp)
+                .clip(CircleShape)
+                .background(NmTheme.colors.accent),
+        )
+        Spacer(Modifier.width(Spacing.s))
+        Text(text.uppercase(), style = NmTheme.type.dotCaption, color = NmTheme.colors.textSecondary)
+    }
+}
+
+/** Faint dot lattice drawn behind content, like Nothing OS wallpapers and widgets. */
+fun Modifier.dotGrid(color: androidx.compose.ui.graphics.Color, spacing: Dp = 18.dp, alpha: Float = 0.07f): Modifier =
+    this.then(
+        Modifier.drawBehind {
+            val step = spacing.toPx()
+            val r = 0.9.dp.toPx()
+            var y = step / 2
+            while (y < size.height) {
+                var x = step / 2
+                while (x < size.width) {
+                    drawCircle(color, radius = r, center = androidx.compose.ui.geometry.Offset(x, y), alpha = alpha)
+                    x += step
+                }
+                y += step
+            }
+        },
+    )
+
+/**
+ * Nothing-style widget tile: rounded surface, icon in a circle, a big dot-matrix value and a small
+ * uppercase label.
+ */
+@Composable
+fun StatTile(
+    icon: ImageVector,
+    value: String,
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    iconTint: androidx.compose.ui.graphics.Color = NmTheme.colors.textPrimary,
+    height: Dp = 118.dp,
+) {
+    val colors = NmTheme.colors
+    Column(
+        modifier
+            .height(height)
+            .clip(RoundedCornerShape(24.dp))
+            .background(colors.surface)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(Spacing.l),
+        verticalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Box(
+            Modifier
+                .size(34.dp)
+                .clip(CircleShape)
+                .background(colors.surfaceHigh),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(17.dp))
+        }
+        Column {
+            Text(value, style = NmTheme.type.screenTitle.copy(fontSize = 34.sp, lineHeight = 36.sp), color = colors.textPrimary, maxLines = 1)
+            Text(label.uppercase(), style = NmTheme.type.dotCaption.copy(fontSize = 11.sp), color = colors.textSecondary, maxLines = 1)
+        }
+    }
 }
 
 /** "Recently Played ........ See all" */
@@ -140,6 +230,13 @@ fun SectionHeader(title: String, modifier: Modifier = Modifier, action: String? 
             .padding(horizontal = Spacing.gutter),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        Box(
+            Modifier
+                .size(6.dp)
+                .clip(CircleShape)
+                .background(NmTheme.colors.accent),
+        )
+        Spacer(Modifier.width(Spacing.s))
         Text(title, style = NmTheme.type.sectionTitle, color = NmTheme.colors.textPrimary, modifier = Modifier.weight(1f))
         if (action != null && onAction != null) {
             Text(

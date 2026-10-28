@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -61,8 +62,13 @@ fun MiniPlayer(
     val scope = rememberCoroutineScope()
     val swipe = remember { Animatable(0f) }
 
-    Column(modifier.background(colors.background)) {
-        NmDivider()
+    Column(
+        modifier
+            .padding(horizontal = Spacing.m)
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(22.dp))
+            .background(colors.surface),
+    ) {
         Row(
             Modifier
                 .fillMaxWidth()
@@ -109,7 +115,7 @@ fun MiniPlayer(
                                 scaleX = k
                                 scaleY = k
                             },
-                        corner = Spacing.thumbCorner,
+                        corner = 22.dp,
                         sizeHint = 48.dp,
                     )
                 }
@@ -160,6 +166,8 @@ fun MiniPlayer(
         // Dotted progress along the bottom edge: played dots red, the rest faint.
         Canvas(
             Modifier
+                .padding(horizontal = 18.dp)
+                .padding(bottom = 6.dp)
                 .fillMaxWidth()
                 .height(4.dp),
         ) {

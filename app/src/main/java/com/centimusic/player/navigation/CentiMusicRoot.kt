@@ -56,6 +56,10 @@ import com.centimusic.player.AppContainer
 import com.centimusic.player.data.media.AudioPermission
 import com.centimusic.player.data.preferences.UserPreferences
 import com.centimusic.player.ui.components.BottomNavBar
+import com.centimusic.player.ui.components.dotGrid
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import com.centimusic.player.ui.components.MiniPlayer
 import com.centimusic.player.ui.components.LocalSongDeleter
 import com.centimusic.player.ui.components.SongActionsHost
@@ -151,7 +155,8 @@ private fun AppScaffold(
     Box(
         Modifier
             .fillMaxSize()
-            .background(colors.background),
+            .background(colors.background)
+            .dotGrid(colors.textPrimary, alpha = if (colors.isDark) 0.07f else 0.09f),
     ) {
         CompositionLocalProvider(LocalChromePadding provides if (showChrome) chromeHeight else 0.dp) {
             NavHost(
@@ -234,9 +239,16 @@ private fun AppScaffold(
                 enter = fadeIn(tween(200)) + slideInVertically { it },
                 exit = fadeOut(tween(120)) + slideOutVertically { it },
             ) {
-                Column(Modifier.onSizeChanged { chromeHeightPx = it.height }) {
+                Column(
+                    Modifier
+                        .onSizeChanged { chromeHeightPx = it.height }
+                        // Content fades out behind the floating player and dock.
+                        .background(Brush.verticalGradient(listOf(colors.background.copy(alpha = 0f), colors.background.copy(alpha = 0.92f), colors.background))),
+                ) {
+                    Spacer(Modifier.height(Spacing.s))
                     if (playback.current != null) {
                         MiniPlayer(playback, container.player, onOpen = navigator::player)
+                        Spacer(Modifier.height(Spacing.s))
                     }
                     BottomNavBar(selectedTab, onSelect = navigator::tab)
                 }
