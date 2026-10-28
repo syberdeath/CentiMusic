@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -194,30 +196,34 @@ fun AnimatedSplash(config: SplashConfig, onFinished: () -> Unit, modifier: Modif
                     translationY = 8.dp.toPx() * (1f - greet)
                 },
             )
-            Spacer(Modifier.height(18.dp))
-            val sig = easeOutCubic((t - tl.sigStart) / 600f)
-            Row(
-                Modifier.graphicsLayer {
+        }
+        // Signature sits at the bottom of the screen.
+        val sig = easeOutCubic((t - tl.sigStart) / 600f)
+        Row(
+            Modifier
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding()
+                .padding(bottom = 40.dp)
+                .graphicsLayer {
                     alpha = sig
                     translationY = 12.dp.toPx() * (1f - sig)
                 },
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text("Made by Vincent with", style = DefaultNmType.bodySmall, color = Color(0xFF8A8A8A))
-                Spacer(Modifier.width(6.dp))
-                val beat = heartbeat(t - tl.sigStart)
-                Icon(
-                    NmIcons.HeartFilled,
-                    contentDescription = null,
-                    tint = AccentRed,
-                    modifier = Modifier
-                        .size(16.dp)
-                        .graphicsLayer {
-                            scaleX = beat
-                            scaleY = beat
-                        },
-                )
-            }
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("Made by Vincent with", style = DefaultNmType.bodySmall, color = Color(0xFF8A8A8A))
+            Spacer(Modifier.width(6.dp))
+            val beat = heartbeat(t - tl.sigStart)
+            Icon(
+                NmIcons.HeartFilled,
+                contentDescription = null,
+                tint = AccentRed,
+                modifier = Modifier
+                    .size(16.dp)
+                    .graphicsLayer {
+                        scaleX = beat
+                        scaleY = beat
+                    },
+            )
         }
     }
 }
