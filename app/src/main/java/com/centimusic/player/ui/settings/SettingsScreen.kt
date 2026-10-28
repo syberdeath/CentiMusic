@@ -49,6 +49,9 @@ import com.centimusic.player.BuildConfig
 import com.centimusic.player.data.media.ScanState
 import com.centimusic.player.data.preferences.ThemeMode
 import com.centimusic.player.data.preferences.PulseStyle
+import com.centimusic.player.data.preferences.SplashChoice
+import com.centimusic.player.navigation.LocalReplaySplash
+import com.centimusic.player.ui.components.TextInputDialog
 import com.centimusic.player.data.preferences.UserPreferences
 import com.centimusic.player.navigation.LocalAppContainer
 import com.centimusic.player.navigation.LocalChromePadding
@@ -103,6 +106,12 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     fun setSkipSilence(v: Boolean) {
         viewModelScope.launch { prefs.setSkipSilence(v) }
     }
+    fun setSplashChoice(choice: SplashChoice) {
+        viewModelScope.launch { prefs.setSplashChoice(choice) }
+    }
+    fun setGreetingName(name: String) {
+        viewModelScope.launch { prefs.setGreetingName(name) }
+    }
     fun setFadeSeconds(seconds: Int) {
         viewModelScope.launch { prefs.setFadeSeconds(seconds) }
     }
@@ -133,6 +142,7 @@ fun SettingsScreen() {
     val state by vm.state.collectAsStateWithLifecycle()
     val navigator = LocalNavigator.current
     val access = LocalLibraryAccess.current
+    val replaySplash = LocalReplaySplash.current
     val message = LocalMessenger.current
     val scope = LocalAppContainer.current.scope
     val colors = NmTheme.colors
@@ -186,6 +196,25 @@ fun SettingsScreen() {
                     value = prefs.pulseStyle.label,
                     iconSize = 40.dp,
                 )
+                SettingsDivider()
+                NavigationRow(
+                    NmIcons.Disc,
+                    "Splash animation",
+                    { dialog = SettingsDialog.Splash },
+                    subtitle = "Plays in full on the first launch of the day",
+                    value = prefs.splashChoice.label,
+                    iconSize = 40.dp,
+                )
+                SettingsDivider()
+                NavigationRow(
+                    NmIcons.Person,
+                    "Greeting name",
+                    { dialog = SettingsDialog.Greeting },
+                    value = prefs.greetingName.ifBlank { "None" },
+                    iconSize = 40.dp,
+                )
+                SettingsDivider()
+                NavigationRow(NmIcons.Play, "Preview splash", replaySplash, iconSize = 40.dp, showChevron = false)
             }
         }
         item {
@@ -323,6 +352,28 @@ fun SettingsScreen() {
             },
             onDismiss = { dialog = null },
         )
+        SettingsDialog.Splash -> ChoiceDialog(
+            title = "Splash animation",
+            options = SplashChoice.entries,
+            selected = prefs.splashChoice,
+            label = { it.label },
+            onSelect = {
+                vm.setSplashChoice(it)
+                dialog = null
+            },
+            onDismiss = { dialog = null },
+        )
+        SettingsDialog.Greeting -> TextInputDialog(
+            title = "Greeting name",
+            confirmLabel = "Save",
+            initial = prefs.greetingName,
+            placeholder = "Your name",
+            onConfirm = {
+                vm.setGreetingName(it)
+                dialog = null
+            },
+            onDismiss = { dialog = null },
+        )
         SettingsDialog.Privacy -> InfoDialog(
             "Privacy",
             "CentiMusic works entirely offline. It reads audio files on this device to build your library, " +
@@ -334,7 +385,7 @@ fun SettingsScreen() {
     }
 }
 
-private enum class SettingsDialog { Theme, Pulse, Fade, Privacy, About }
+private enum class SettingsDialog { Theme, Pulse, Fade, Splash, Greeting, Privacy, About }
 
 @Composable
 private fun GroupLabel(text: String) {

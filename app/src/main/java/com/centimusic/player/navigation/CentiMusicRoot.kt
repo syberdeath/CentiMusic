@@ -83,6 +83,10 @@ import com.centimusic.player.ui.queue.QueueScreen
 import com.centimusic.player.ui.search.SearchScreen
 import com.centimusic.player.ui.settings.SettingsScreen
 import com.centimusic.player.ui.splash.AnimatedSplash
+import com.centimusic.player.ui.splash.SplashConfig
+import com.centimusic.player.ui.splash.SplashStyle
+import com.centimusic.player.data.preferences.SplashChoice
+import kotlinx.coroutines.flow.first
 import com.centimusic.player.ui.visualizer.VisualizerScreen
 import com.centimusic.player.ui.theme.NmTheme
 import com.centimusic.player.ui.theme.CentiMusicTheme
@@ -109,6 +113,34 @@ fun CentiMusicRoot(container: AppContainer) {
         }
         // Shown once per launch; survives rotation so it doesn't replay.
         var showSplash by rememberSaveable { mutableStateOf(true) }
+        var splashConfig by remember { mutableStateOf<SplashConfig?>(null) }
+        var forceFullSplash by remember { mutableStateOf(false) }
+        // Decide which launch animation to play: full on the first launch of the day, quick after.
+        LaunchedEffect(showSplash) {
+            if (!showSplash) {
+                splashConfig = null
+                return@LaunchedEffect
+            }
+            val p = container.preferences.preferences.first()
+            val today = java.text.SimpleDateFormat("yyyy-DDD", java.util.Locale.US).format(java.util.Date())
+            val full = forceFullSplash || p.lastFullSplashDay != today
+            val style = when (p.splashChoice) {
+                SplashChoice.SURPRISE -> SplashStyle.entries.random()
+                SplashChoice.BOOT -> SplashStyle.BOOT
+                SplashChoice.GLYPH -> SplashStyle.GLYPH
+                SplashChoice.PULSE -> SplashStyle.PULSE
+                SplashChoice.VINYL -> SplashStyle.VINYL
+            }
+            splashConfig = SplashConfig(style, full, p.greetingName)
+            forceFullSplash = false
+            if (full) container.preferences.setLastFullSplashDay(today)
+        }
+        val replaySplash: () -> Unit = remember {
+            {
+                forceFullSplash = true
+                showSplash = true
+            }
+        }
         val access = rememberLibraryAccess(container, messenger, askForPermission = !showSplash)
 
         LaunchedEffect(Unit) {
@@ -122,12 +154,21 @@ fun CentiMusicRoot(container: AppContainer) {
             LocalSongMenu provides songMenu,
             LocalSongDeleter provides songDeleter,
             LocalLibraryAccess provides access,
+            LocalReplaySplash provides replaySplash,
         ) {
             Box(Modifier.fillMaxSize()) {
                 AppScaffold(navController, navigator, container, snackbar)
                 SongActionsHost(songMenu)
                 SongDeleteHost(songDeleter)
-                if (showSplash) AnimatedSplash(onFinished = { showSplash = false })
+                if (showSplash) {
+                    val config = splashConfig
+                    if (config == null) {
+                        // A frame or two while preferences load: stay black like the system splash.
+                        Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color(0xFF080808)))
+                    } else {
+                        AnimatedSplash(config, onFinished = { showSplash = false })
+                    }
+                }
             }
         }
     }

@@ -8,7 +8,7 @@
     <!-- System launch screen (all API levels via core-splashscreen). AnimatedSplash continues from it. -->
     <style name="Theme.CentiMusic.Splash" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/nm_black</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_blank</item>
         <item name="postSplashScreenTheme">@style/Theme.CentiMusic</item>
     </style>
 </resources>

@@ -37,6 +37,11 @@ data class UserPreferences(
     val pulseStyle: PulseStyle = PulseStyle.HALO,
     /** Folders (relative paths) left out of the library, e.g. WhatsApp audio or recordings. */
     val hiddenFolders: Set<String> = emptySet(),
+    val splashChoice: SplashChoice = SplashChoice.SURPRISE,
+    /** Name used in the launch greeting ("Good evening, Vincent"). */
+    val greetingName: String = "Vincent",
+    /** Day (yyyy-DDD) the full launch animation last played; later launches that day are quick. */
+    val lastFullSplashDay: String = "",
 )
 
 /** Playback position bookkeeping for queue restoration. */
@@ -60,6 +65,9 @@ class PreferencesRepository(private val context: Context) {
         val hideDuplicates = booleanPreferencesKey("hide_duplicates")
         val pulseStyle = stringPreferencesKey("pulse_style")
         val hiddenFolders = stringSetPreferencesKey("hidden_folders")
+        val splashChoice = stringPreferencesKey("splash_choice")
+        val greetingName = stringPreferencesKey("greeting_name")
+        val lastFullSplashDay = stringPreferencesKey("last_full_splash_day")
         val resumeIndex = intPreferencesKey("resume_index")
         val resumePosition = longPreferencesKey("resume_position")
     }
@@ -80,6 +88,9 @@ class PreferencesRepository(private val context: Context) {
             hideDuplicates = p[Keys.hideDuplicates] ?: true,
             pulseStyle = p[Keys.pulseStyle]?.let { runCatching { PulseStyle.valueOf(it) }.getOrNull() } ?: PulseStyle.HALO,
             hiddenFolders = p[Keys.hiddenFolders] ?: emptySet(),
+            splashChoice = p[Keys.splashChoice]?.let { runCatching { SplashChoice.valueOf(it) }.getOrNull() } ?: SplashChoice.SURPRISE,
+            greetingName = p[Keys.greetingName] ?: "Vincent",
+            lastFullSplashDay = p[Keys.lastFullSplashDay] ?: "",
         )
     }
 
@@ -96,6 +107,9 @@ class PreferencesRepository(private val context: Context) {
     suspend fun setVisualizerOnLockScreen(value: Boolean) = context.dataStore.edit { it[Keys.visualizerLock] = value }
     suspend fun setHideDuplicates(value: Boolean) = context.dataStore.edit { it[Keys.hideDuplicates] = value }
     suspend fun setPulseStyle(style: PulseStyle) = context.dataStore.edit { it[Keys.pulseStyle] = style.name }
+    suspend fun setSplashChoice(value: SplashChoice) = context.dataStore.edit { it[Keys.splashChoice] = value.name }
+    suspend fun setGreetingName(value: String) = context.dataStore.edit { it[Keys.greetingName] = value.trim() }
+    suspend fun setLastFullSplashDay(value: String) = context.dataStore.edit { it[Keys.lastFullSplashDay] = value }
     suspend fun setFolderHidden(folder: String, hidden: Boolean) = context.dataStore.edit {
         val current = it[Keys.hiddenFolders] ?: emptySet()
         it[Keys.hiddenFolders] = if (hidden) current + folder else current - folder

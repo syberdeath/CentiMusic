@@ -57,4 +57,7 @@ data class LibraryAccess(
     val importFiles: () -> Unit,
 )
 
+/** Replays the launch animation (Settings → Preview splash). */
+val LocalReplaySplash = staticCompositionLocalOf<() -> Unit> { {} }
+
 val LocalLibraryAccess = compositionLocalOf { LibraryAccess(true, false, {}, {}) }
