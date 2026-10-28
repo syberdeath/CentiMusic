@@ -123,7 +123,7 @@ fun CentiMusicRoot(container: AppContainer) {
             }
             val p = container.preferences.preferences.first()
             val today = java.text.SimpleDateFormat("yyyy-DDD", java.util.Locale.US).format(java.util.Date())
-            val full = forceFullSplash || p.lastFullSplashDay != today
+            val full = forceFullSplash || p.alwaysFullSplash || p.lastFullSplashDay != today
             val style = when (p.splashChoice) {
                 SplashChoice.SURPRISE -> SplashStyle.entries.random()
                 SplashChoice.BOOT -> SplashStyle.BOOT

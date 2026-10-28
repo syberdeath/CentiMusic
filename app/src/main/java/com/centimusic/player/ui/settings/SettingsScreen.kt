@@ -106,6 +106,9 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     fun setSkipSilence(v: Boolean) {
         viewModelScope.launch { prefs.setSkipSilence(v) }
     }
+    fun setAlwaysFullSplash(v: Boolean) {
+        viewModelScope.launch { prefs.setAlwaysFullSplash(v) }
+    }
     fun setSplashChoice(choice: SplashChoice) {
         viewModelScope.launch { prefs.setSplashChoice(choice) }
     }
@@ -212,6 +215,14 @@ fun SettingsScreen() {
                     { dialog = SettingsDialog.Greeting },
                     value = prefs.greetingName.ifBlank { "None" },
                     iconSize = 40.dp,
+                )
+                SettingsDivider()
+                ToggleRow(
+                    NmIcons.Clock,
+                    "Always play full splash",
+                    "Off: the full animation plays on the first launch of the day, a quick one after",
+                    prefs.alwaysFullSplash,
+                    vm::setAlwaysFullSplash,
                 )
                 SettingsDivider()
                 NavigationRow(NmIcons.Play, "Preview splash", replaySplash, iconSize = 40.dp, showChevron = false)

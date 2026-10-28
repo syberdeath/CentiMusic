@@ -42,6 +42,8 @@ data class UserPreferences(
     val greetingName: String = "Vincent",
     /** Day (yyyy-DDD) the full launch animation last played; later launches that day are quick. */
     val lastFullSplashDay: String = "",
+    /** Play the full launch animation every time instead of the quick one after the first launch of the day. */
+    val alwaysFullSplash: Boolean = false,
 )
 
 /** Playback position bookkeeping for queue restoration. */
@@ -68,6 +70,7 @@ class PreferencesRepository(private val context: Context) {
         val splashChoice = stringPreferencesKey("splash_choice")
         val greetingName = stringPreferencesKey("greeting_name")
         val lastFullSplashDay = stringPreferencesKey("last_full_splash_day")
+        val alwaysFullSplash = booleanPreferencesKey("always_full_splash")
         val resumeIndex = intPreferencesKey("resume_index")
         val resumePosition = longPreferencesKey("resume_position")
     }
@@ -91,6 +94,7 @@ class PreferencesRepository(private val context: Context) {
             splashChoice = p[Keys.splashChoice]?.let { runCatching { SplashChoice.valueOf(it) }.getOrNull() } ?: SplashChoice.SURPRISE,
             greetingName = p[Keys.greetingName] ?: "Vincent",
             lastFullSplashDay = p[Keys.lastFullSplashDay] ?: "",
+            alwaysFullSplash = p[Keys.alwaysFullSplash] ?: false,
         )
     }
 
@@ -110,6 +114,7 @@ class PreferencesRepository(private val context: Context) {
     suspend fun setSplashChoice(value: SplashChoice) = context.dataStore.edit { it[Keys.splashChoice] = value.name }
     suspend fun setGreetingName(value: String) = context.dataStore.edit { it[Keys.greetingName] = value.trim() }
     suspend fun setLastFullSplashDay(value: String) = context.dataStore.edit { it[Keys.lastFullSplashDay] = value }
+    suspend fun setAlwaysFullSplash(value: Boolean) = context.dataStore.edit { it[Keys.alwaysFullSplash] = value }
     suspend fun setFolderHidden(folder: String, hidden: Boolean) = context.dataStore.edit {
         val current = it[Keys.hiddenFolders] ?: emptySet()
         it[Keys.hiddenFolders] = if (hidden) current + folder else current - folder

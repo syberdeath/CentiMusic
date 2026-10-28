@@ -89,10 +89,11 @@ private class Timeline(
     val end: Float,
 )
 
-private val FULL = Timeline(intro = 1450f, liftStart = 1300f, liftDur = 520f, wordStart = 1550f, stagger = 55f, scrambleLead = 230f,
-    greetStart = 2150f, sigStart = 2350f, end = 3300f)
-private val QUICK = Timeline(intro = 380f, liftStart = 260f, liftDur = 360f, wordStart = 380f, stagger = 22f, scrambleLead = 90f,
-    greetStart = 560f, sigStart = 660f, end = 1450f)
+// Slower, calmer pacing: ~5.6 s full, ~2.3 s quick.
+private val FULL = Timeline(intro = 2600f, liftStart = 2400f, liftDur = 750f, wordStart = 2900f, stagger = 85f, scrambleLead = 340f,
+    greetStart = 3900f, sigStart = 4300f, end = 5600f)
+private val QUICK = Timeline(intro = 700f, liftStart = 520f, liftDur = 520f, wordStart = 720f, stagger = 38f, scrambleLead = 150f,
+    greetStart = 1050f, sigStart = 1200f, end = 2300f)
 
 private fun clamp01(x: Float) = x.coerceIn(0f, 1f)
 private fun easeOutCubic(x: Float) = 1f - (1f - clamp01(x)).pow(3)
@@ -124,7 +125,7 @@ private fun greeting(name: String): String {
 /**
  * CentiMusic launch animation. Four intros ([SplashStyle]) form the dot-equalizer mark, then a
  * shared outro lifts it, scrambles in the wordmark, greets the user and signs off with a
- * heartbeat. [SplashConfig.full] = false plays a ~1.4 s quick version. Tap anywhere to skip.
+ * heartbeat. [SplashConfig.full] = false plays a ~2.3 s quick version. Tap anywhere to skip.
  */
 @Composable
 fun AnimatedSplash(config: SplashConfig, onFinished: () -> Unit, modifier: Modifier = Modifier) {
@@ -139,14 +140,14 @@ fun AnimatedSplash(config: SplashConfig, onFinished: () -> Unit, modifier: Modif
         launch { delay(tl.intro.toLong()); haptics.confirm() }
         if (config.full) launch { delay((tl.sigStart + 120).toLong()); haptics.tick() }
         clock.animateTo(tl.end, tween(tl.end.toInt(), easing = LinearEasing))
-        exit.animateTo(0f, tween(300))
+        exit.animateTo(0f, tween(450))
         finish()
     }
     LightBars()
 
     val t = clock.value
     val introP = clamp01(t / tl.intro)
-    val outro = clamp01((t - tl.intro) / 420f)
+    val outro = clamp01((t - tl.intro) / 650f)
     val lift = easeInOut((t - tl.liftStart) / tl.liftDur)
 
     Box(
@@ -183,7 +184,7 @@ fun AnimatedSplash(config: SplashConfig, onFinished: () -> Unit, modifier: Modif
                 color = Color.White,
             )
             Spacer(Modifier.height(10.dp))
-            val greet = easeOutCubic((t - tl.greetStart) / 400f)
+            val greet = easeOutCubic((t - tl.greetStart) / 600f)
             Text(
                 greeting(config.name),
                 style = DefaultNmType.dotCaption.copy(fontSize = 14.sp),
@@ -194,7 +195,7 @@ fun AnimatedSplash(config: SplashConfig, onFinished: () -> Unit, modifier: Modif
                 },
             )
             Spacer(Modifier.height(18.dp))
-            val sig = easeOutCubic((t - tl.sigStart) / 400f)
+            val sig = easeOutCubic((t - tl.sigStart) / 600f)
             Row(
                 Modifier.graphicsLayer {
                     alpha = sig
@@ -236,7 +237,7 @@ private fun scrambledWordmark(t: Float, tl: Timeline) = buildAnnotatedString {
     }
 }
 
-/** "Lub-dub" scale, repeating every 1.3 s. */
+/** "Lub-dub" scale, repeating every 1.3 s (a resting heartbeat). */
 private fun heartbeat(sinceStart: Float): Float {
     if (sinceStart < 0f) return 1f
     val x = sinceStart % 1300f
