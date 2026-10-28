@@ -346,16 +346,7 @@ fun EmptyState(
             .padding(horizontal = Spacing.xxxl, vertical = Spacing.xxxl),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Box(contentAlignment = Alignment.TopEnd) {
-            CircleIcon(icon, size = 64.dp)
-            Box(
-                Modifier
-                    .padding(top = 2.dp, end = 2.dp)
-                    .size(10.dp)
-                    .clip(CircleShape)
-                    .background(NmTheme.colors.accent),
-            )
-        }
+        DotMatrixIcon(icon)
         Spacer(Modifier.height(Spacing.xl))
         Text(title, style = NmTheme.type.sectionTitle, color = NmTheme.colors.textPrimary)
         Spacer(Modifier.height(Spacing.s))

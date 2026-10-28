@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import com.centimusic.player.ui.components.CollapsingTitleBar
+import com.centimusic.player.ui.components.rememberHeaderCollapsed
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.DropdownMenu
@@ -127,6 +129,8 @@ private fun PlaylistContent(playlist: Playlist, vm: PlaylistViewModel) {
         }
     }
 
+    val collapsed by rememberHeaderCollapsed(listState, headerIndex = 1)
+    Box(Modifier.fillMaxSize()) {
     LazyColumn(state = listState, modifier = Modifier.fillMaxSize(), contentPadding = bottomContentPadding(LocalChromePadding.current)) {
         item(key = "top") {
             TopBar(onBack = navigator::back) {
@@ -224,6 +228,14 @@ private fun PlaylistContent(playlist: Playlist, vm: PlaylistViewModel) {
                 )
             }
         }
+    }
+    CollapsingTitleBar(
+        visible = collapsed,
+        title = playlist.name,
+        onBack = navigator::back,
+        onPlay = if (songs.isNotEmpty()) ({ container.player.play(songs, shuffle = false) }) else null,
+        modifier = Modifier.align(Alignment.TopCenter),
+    )
     }
 
     if (renaming) {

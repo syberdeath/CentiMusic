@@ -2,6 +2,9 @@ package com.centimusic.player.ui.library
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.lazy.rememberLazyListState
+import com.centimusic.player.ui.components.CollapsingTitleBar
+import com.centimusic.player.ui.components.rememberHeaderCollapsed
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -95,7 +98,10 @@ fun ArtistScreen(name: String) {
     val colors = NmTheme.colors
     val artist = state.artist
 
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = bottomContentPadding(LocalChromePadding.current, Spacing.xxl)) {
+    val listState = rememberLazyListState()
+    val collapsed by rememberHeaderCollapsed(listState, headerIndex = 1)
+    Box(Modifier.fillMaxSize()) {
+    LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = bottomContentPadding(LocalChromePadding.current, Spacing.xxl)) {
         item(key = "top") { TopBar(onBack = navigator::back) }
         when {
             state.loading -> item(key = "loading") { LoadingState("Loading artist") }
@@ -201,5 +207,13 @@ fun ArtistScreen(name: String) {
                 }
             }
         }
+    }
+    CollapsingTitleBar(
+        visible = collapsed && artist != null,
+        title = name,
+        onBack = navigator::back,
+        onPlay = artist?.let { a -> { container.player.play(a.songs, shuffle = false) } },
+        modifier = Modifier.align(Alignment.TopCenter),
+    )
     }
 }

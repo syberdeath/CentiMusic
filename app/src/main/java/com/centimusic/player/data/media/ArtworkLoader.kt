@@ -33,6 +33,10 @@ object ArtworkLoader {
 
     fun cached(song: Song, sizePx: Int): Bitmap? = cache.get(cacheKey(song, sizePx)) as? Bitmap
 
+    /** Any already-decoded size, largest first: a stand-in while the right size loads. */
+    fun cachedAny(song: Song): Bitmap? =
+        listOf(1024, 512, 192).firstNotNullOfOrNull { cache.get("${song.artworkKey}@$it") as? Bitmap }
+
     suspend fun load(context: Context, song: Song, sizePx: Int): Bitmap? {
         val key = cacheKey(song, sizePx)
         when (val hit = cache.get(key)) {

@@ -104,6 +104,7 @@ fun MiniPlayer(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(Modifier.size(44.dp)) {
+                Box(Modifier.size(44.dp).sharedArt(NOW_ART_KEY)) {
                 AnimatedContent(song, transitionSpec = { fadeIn() togetherWith fadeOut() }, contentKey = { it.id }, label = "miniArt") { s ->
                     Artwork(
                         s,
@@ -118,6 +119,7 @@ fun MiniPlayer(
                         corner = 22.dp,
                         sizeHint = 48.dp,
                     )
+                }
                 }
                 if (state.isPlaying) {
                     Box(
@@ -186,3 +188,6 @@ fun MiniPlayer(
         }
     }
 }
+
+/** Shared-element key for the playing track's artwork (mini-player ⇄ Now Playing). */
+const val NOW_ART_KEY = "now-art"

@@ -56,6 +56,8 @@ import com.centimusic.player.navigation.LocalSongMenu
 import com.centimusic.player.playback.OutputKind
 import com.centimusic.player.ui.components.Artwork
 import com.centimusic.player.ui.components.MarqueeText
+import com.centimusic.player.ui.components.NOW_ART_KEY
+import com.centimusic.player.ui.components.sharedArt
 import com.centimusic.player.ui.components.rememberHaptics
 import com.centimusic.player.ui.visualizer.DotProgress
 import androidx.compose.animation.core.Animatable
@@ -213,76 +215,62 @@ fun NowPlayingScreen() {
                     accent = colors.accent,
                     restColor = colors.textPrimary,
                 )
-                AnimatedContent(
-                    targetState = song,
-                    transitionSpec = {
-                        (fadeIn(tween(320)) + scaleIn(tween(320), initialScale = 0.94f)) togetherWith
-                            (fadeOut(tween(200)) + scaleOut(tween(200), targetScale = 0.98f))
-                    },
-                    contentKey = { it.id },
-                    label = "artwork",
-                ) { current ->
-                    Box(
-                        Modifier
-                            .size(side)
-                            .graphicsLayer {
-                                // Shrinks on pause; breathes very slightly with the pulse while playing.
-                                val s = cardScale * (1f + 0.025f * pulse.level)
-                                scaleX = s
-                                scaleY = s
+                Box(
+                    Modifier
+                        .size(side)
+                        .graphicsLayer {
+                            // Shrinks on pause; breathes very slightly with the pulse while playing.
+                            val s = cardScale * (1f + 0.025f * pulse.level)
+                            scaleX = s
+                            scaleY = s
+                        },
+                ) {
+                    Box(Modifier.fillMaxSize().sharedArt(NOW_ART_KEY)) {
+                        AnimatedContent(
+                            targetState = song,
+                            transitionSpec = {
+                                (fadeIn(tween(320)) + scaleIn(tween(320), initialScale = 0.94f)) togetherWith
+                                    (fadeOut(tween(200)) + scaleOut(tween(200), targetScale = 0.98f))
                             },
-                    ) {
-                        // Circular, so it sits fully inside the pulse ring like a record.
-                        Artwork(
-                            current,
-                            Modifier.fillMaxSize(),
-                            corner = side / 2,
-                            sizeHint = 1024.dp,
-                            contentModifier = Modifier.graphicsLayer {
-                                // Ken Burns drift: always zoomed in enough that the edges never show.
-                                if (!motion.enabled) return@graphicsLayer
-                                val t = motion.phase
-                                val zoom = 1.10f + 0.05f * sin(t * 0.21f)
-                                scaleX = zoom
-                                scaleY = zoom
-                                translationX = size.width * 0.035f * sin(t * 0.13f)
-                                translationY = size.height * 0.035f * cos(t * 0.17f)
-                            },
-                        )
+                            contentKey = { it.id },
+                            label = "artwork",
+                        ) { current ->
+                            // Circular, so it sits fully inside the pulse ring like a record.
+                            Artwork(
+                                current,
+                                Modifier.fillMaxSize(),
+                                corner = side / 2,
+                                sizeHint = 1024.dp,
+                                contentModifier = Modifier.graphicsLayer {
+                                    // Ken Burns drift: always zoomed in enough that the edges never show.
+                                    if (!motion.enabled) return@graphicsLayer
+                                    val t = motion.phase
+                                    val zoom = 1.10f + 0.05f * sin(t * 0.21f)
+                                    scaleX = zoom
+                                    scaleY = zoom
+                                    translationX = size.width * 0.035f * sin(t * 0.13f)
+                                    translationY = size.height * 0.035f * cos(t * 0.17f)
+                                },
+                            )
+                        }
                     }
                 }
             }
         }
 
         Column(Modifier.padding(horizontal = 28.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    AnimatedContent(song, transitionSpec = { fadeIn(tween(250)) togetherWith fadeOut(tween(150)) }, contentKey = { it.id }, label = "title") { s ->
-                        Column {
-                            MarqueeText(s.title, style = NmTheme.type.trackTitle, color = colors.textPrimary)
-                            Spacer(Modifier.height(Spacing.xs))
-                            Text(
-                                s.artist,
-                                style = NmTheme.type.title,
-                                color = colors.textSecondary,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
-                    }
-                }
-                NmIconButton(
-                    if (isLiked) NmIcons.HeartFilled else NmIcons.Heart,
-                    if (isLiked) "Remove from Liked Songs" else "Add to Liked Songs",
-                    {
-                        haptics.confirm()
-                        scope.launch { container.favorites.setLiked(song, !isLiked, library) }
-                    },
-                    tint = if (isLiked) colors.accent else colors.textPrimary,
-                )
-            }
+            NowPlayingPages(
+                song = song,
+                playback = playback,
+                isLiked = isLiked,
+                onToggleLike = {
+                    haptics.confirm()
+                    scope.launch { container.favorites.setLiked(song, !isLiked, library) }
+                },
+                onPlayQueueItem = player::playQueueItem,
+            )
 
-            Spacer(Modifier.height(Spacing.l))
+            Spacer(Modifier.height(Spacing.m))
             DotProgress(
                 positionMs = position,
                 durationMs = playback.durationMs,

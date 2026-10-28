@@ -38,6 +38,7 @@ import com.centimusic.player.ui.components.NavigationRow
 import com.centimusic.player.ui.components.NmIconButton
 import com.centimusic.player.ui.components.ScreenTitle
 import com.centimusic.player.ui.components.SectionHeader
+import com.centimusic.player.ui.components.RescanRefreshBox
 import com.centimusic.player.ui.components.bottomContentPadding
 import com.centimusic.player.ui.theme.NmIcons
 import com.centimusic.player.ui.theme.Spacing
@@ -84,6 +85,7 @@ fun LibraryScreen() {
     val navigator = LocalNavigator.current
     val access = LocalLibraryAccess.current
 
+    RescanRefreshBox {
     LazyColumn(Modifier.fillMaxSize(), contentPadding = bottomContentPadding(LocalChromePadding.current, Spacing.xxl)) {
         item {
             ScreenTitle("Library") {
@@ -144,6 +146,7 @@ fun LibraryScreen() {
                 }
             }
         }
+    }
     }
 }
 

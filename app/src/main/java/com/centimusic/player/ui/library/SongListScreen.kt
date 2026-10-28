@@ -67,6 +67,14 @@ import com.centimusic.player.ui.components.LoadingState
 import com.centimusic.player.ui.components.NmIconButton
 import com.centimusic.player.ui.components.SongRow
 import com.centimusic.player.ui.components.TopBar
+import com.centimusic.player.ui.components.AlbumHeader
+import com.centimusic.player.ui.components.MaybeRescanRefresh
+import com.centimusic.player.ui.components.AlbumCard
+import com.centimusic.player.ui.components.CollapsingTitleBar
+import com.centimusic.player.ui.components.SectionHeader
+import com.centimusic.player.ui.components.rememberHeaderCollapsed
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import com.centimusic.player.ui.components.bottomContentPadding
 import com.centimusic.player.ui.theme.NmIcons
 import com.centimusic.player.ui.theme.NmTheme
@@ -112,13 +120,36 @@ fun SongListScreen(source: SongListSource) {
         }
     }
     val headerItems = 2 + if (state.duplicates != null) 1 else 0
+    val albumSource = source as? SongListSource.Album
+    val library by container.music.library.collectAsStateWithLifecycle()
+    // Read straight from the library so the cover is there on the first frame of the shared transition.
+    val album = remember(library, albumSource) { albumSource?.let { library.album(it.albumKey) } }
+    val moreByArtist = remember(library, album) {
+        album?.let { a -> library.albums.filter { it.artist == a.artist && it.key != a.key }.sortedByDescending { it.year } }.orEmpty()
+    }
+    val collapsed by rememberHeaderCollapsed(listState, headerIndex = if (albumSource != null) 0 else 1)
+    val sortAction: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit = {
+        if (state.sortable) NmIconButton(NmIcons.Sort, "Sort songs", { showSort = true })
+    }
 
     Box(Modifier.fillMaxSize()) {
+        MaybeRescanRefresh(enabled = source == SongListSource.AllSongs) {
         LazyColumn(Modifier.fillMaxSize(), state = listState, contentPadding = bottomContentPadding(LocalChromePadding.current)) {
-            item(key = "top") {
-                TopBar(onBack = navigator::back) {
-                    if (state.sortable) NmIconButton(NmIcons.Sort, "Sort songs", { showSort = true })
+            if (albumSource != null) {
+                item(key = "header") {
+                    AlbumHeader(
+                        album = album,
+                        albumKey = albumSource.albumKey,
+                        onBack = navigator::back,
+                        onArtist = navigator::artist,
+                        onPlay = { container.player.play(state.songs, shuffle = false) },
+                        onShuffle = { container.player.shuffle(state.songs) },
+                        onAddToPlaylist = { menu.pickPlaylistFor(state.songs) },
+                    )
                 }
+            } else {
+            item(key = "top") {
+                TopBar(onBack = navigator::back, actions = sortAction)
             }
             item(key = "header") {
                 CollectionHeader(
@@ -127,6 +158,7 @@ fun SongListScreen(source: SongListSource) {
                     onShuffle = { container.player.shuffle(state.songs) },
                     onAddToPlaylist = { menu.pickPlaylistFor(state.songs) },
                 )
+            }
             }
             state.duplicates?.let { dup ->
                 item(key = "duplicates") {
@@ -164,7 +196,32 @@ fun SongListScreen(source: SongListSource) {
                     )
                 }
             }
+            if (moreByArtist.isNotEmpty() && album != null) {
+                item(key = "more") {
+                    Spacer(Modifier.height(Spacing.xxl))
+                    SectionHeader("More by ${album.artist}", action = "Artist", onAction = { navigator.artist(album.artist) })
+                    Spacer(Modifier.height(Spacing.s))
+                    LazyRow(
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = Spacing.gutter),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.l),
+                    ) {
+                        items(moreByArtist, key = { it.key }) { other ->
+                            AlbumCard(other, onClick = { navigator.album(other.key) }, modifier = Modifier.width(140.dp), onPlay = { container.player.play(other.songs) })
+                        }
+                    }
+                }
+            }
         }
+        }
+
+        CollapsingTitleBar(
+            visible = collapsed && !selecting,
+            title = album?.title ?: state.title,
+            onBack = navigator::back,
+            onPlay = if (state.songs.isNotEmpty()) ({ container.player.play(state.songs, shuffle = false) }) else null,
+            actions = sortAction,
+            modifier = Modifier.align(Alignment.TopCenter),
+        )
 
         if (letterIndex != null && !selecting && !state.loading) {
             AlphabetScroller(

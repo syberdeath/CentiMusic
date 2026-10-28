@@ -32,6 +32,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import kotlinx.coroutines.flow.map
+import com.centimusic.player.ui.splash.timeOfDayGreeting
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -242,7 +245,17 @@ private fun Hero(compact: Boolean, onSettings: () -> Unit, modifier: Modifier = 
                 .padding(start = Spacing.gutter, bottom = Spacing.xxl),
         ) {
             if (compact) {
-                Text("MUSIC FOR A\nCLEARER MIND", style = NmTheme.type.hero.copy(fontSize = 30.sp, lineHeight = 33.sp), color = colors.textPrimary)
+                // Once there's history, greet by name instead of the tagline.
+                val prefsFlow = LocalAppContainer.current.preferences.preferences
+                val name by remember(prefsFlow) { prefsFlow.map { it.greetingName } }.collectAsStateWithLifecycle(initialValue = "")
+                val today = remember { java.text.SimpleDateFormat("EEE d MMM", java.util.Locale.getDefault()).format(java.util.Date()) }
+                Text(today.uppercase(), style = NmTheme.type.dotCaption, color = colors.textTertiary)
+                Spacer(Modifier.height(Spacing.s))
+                Text(
+                    (if (name.isBlank()) timeOfDayGreeting() else "${timeOfDayGreeting()},\n${name.trim()}").uppercase(),
+                    style = NmTheme.type.hero.copy(fontSize = 30.sp, lineHeight = 33.sp),
+                    color = colors.textPrimary,
+                )
                 Spacer(Modifier.height(Spacing.l))
             } else {
                 Text("MUSIC\nFOR A\nCLEARER\nMIND", style = NmTheme.type.hero, color = colors.textPrimary)

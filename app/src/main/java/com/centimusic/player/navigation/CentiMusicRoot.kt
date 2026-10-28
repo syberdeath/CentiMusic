@@ -9,6 +9,15 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.navigation.NamedNavArgument
+import androidx.navigation.NavGraphBuilder
+import com.centimusic.player.ui.components.LocalNavScope
+import com.centimusic.player.ui.components.LocalSharedScope
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -174,6 +183,7 @@ fun CentiMusicRoot(container: AppContainer) {
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun AppScaffold(
     navController: NavHostController,
@@ -199,6 +209,9 @@ private fun AppScaffold(
             .background(colors.background)
             .dotGrid(colors.textPrimary, alpha = if (colors.isDark) 0.07f else 0.09f),
     ) {
+      SharedTransitionLayout(Modifier.fillMaxSize()) {
+       CompositionLocalProvider(LocalSharedScope provides this) {
+        Box(Modifier.fillMaxSize()) {
         CompositionLocalProvider(LocalChromePadding provides if (showChrome) chromeHeight else 0.dp) {
             NavHost(
                 navController = navController,
@@ -209,53 +222,53 @@ private fun AppScaffold(
                 popEnterTransition = { fadeIn(tween(220)) },
                 popExitTransition = { fadeOut(tween(160)) + slideOutHorizontally(tween(260)) { it / 12 } },
             ) {
-                composable(Routes.HOME, enterTransition = { fadeIn(tween(200)) }) { HomeScreen() }
-                composable(Routes.SEARCH, enterTransition = { fadeIn(tween(200)) }) { SearchScreen() }
-                composable(Routes.LIBRARY, enterTransition = { fadeIn(tween(200)) }) { LibraryScreen() }
-                composable(Routes.SONGS) { SongListScreen(SongListSource.AllSongs) }
-                composable(Routes.LIKED) { SongListScreen(SongListSource.Liked) }
-                composable(Routes.RECENT) { SongListScreen(SongListSource.RecentlyAdded) }
-                composable(Routes.HISTORY) { SongListScreen(SongListSource.RecentlyPlayed) }
-                composable(Routes.ALBUMS) { AlbumsScreen() }
-                composable(Routes.ALBUM, arguments = listOf(navArgument("key") { type = NavType.StringType })) {
+                dest(Routes.HOME, enterTransition = { fadeIn(tween(200)) }) { HomeScreen() }
+                dest(Routes.SEARCH, enterTransition = { fadeIn(tween(200)) }) { SearchScreen() }
+                dest(Routes.LIBRARY, enterTransition = { fadeIn(tween(200)) }) { LibraryScreen() }
+                dest(Routes.SONGS) { SongListScreen(SongListSource.AllSongs) }
+                dest(Routes.LIKED) { SongListScreen(SongListSource.Liked) }
+                dest(Routes.RECENT) { SongListScreen(SongListSource.RecentlyAdded) }
+                dest(Routes.HISTORY) { SongListScreen(SongListSource.RecentlyPlayed) }
+                dest(Routes.ALBUMS) { AlbumsScreen() }
+                dest(Routes.ALBUM, arguments = listOf(navArgument("key") { type = NavType.StringType })) {
                     SongListScreen(SongListSource.Album(it.stringArg("key")))
                 }
-                composable(Routes.ARTISTS) { ArtistsScreen() }
-                composable(Routes.ARTIST, arguments = listOf(navArgument("name") { type = NavType.StringType })) {
+                dest(Routes.ARTISTS) { ArtistsScreen() }
+                dest(Routes.ARTIST, arguments = listOf(navArgument("name") { type = NavType.StringType })) {
                     ArtistScreen(it.stringArg("name"))
                 }
-                composable(Routes.ARTIST_SONGS, arguments = listOf(navArgument("name") { type = NavType.StringType })) {
+                dest(Routes.ARTIST_SONGS, arguments = listOf(navArgument("name") { type = NavType.StringType })) {
                     SongListScreen(SongListSource.Artist(it.stringArg("name")))
                 }
-                composable(Routes.EDIT_SONG, arguments = listOf(navArgument("id") { type = NavType.StringType })) {
+                dest(Routes.EDIT_SONG, arguments = listOf(navArgument("id") { type = NavType.StringType })) {
                     EditSongScreen(it.stringArg("id"))
                 }
-                composable(Routes.HIDDEN_FOLDERS) { HiddenFoldersScreen() }
-                composable(Routes.FOLDERS) { FoldersScreen() }
-                composable(Routes.FOLDER, arguments = listOf(navArgument("path") { type = NavType.StringType })) {
+                dest(Routes.HIDDEN_FOLDERS) { HiddenFoldersScreen() }
+                dest(Routes.FOLDERS) { FoldersScreen() }
+                dest(Routes.FOLDER, arguments = listOf(navArgument("path") { type = NavType.StringType })) {
                     SongListScreen(SongListSource.Folder(it.stringArg("path").let { p -> if (p == "/") "" else p }))
                 }
-                composable(Routes.PLAYLISTS) { PlaylistsScreen() }
-                composable(Routes.PLAYLIST, arguments = listOf(navArgument("id") { type = NavType.LongType })) {
+                dest(Routes.PLAYLISTS) { PlaylistsScreen() }
+                dest(Routes.PLAYLIST, arguments = listOf(navArgument("id") { type = NavType.LongType })) {
                     PlaylistDetailScreen(it.arguments?.getLong("id") ?: 0L)
                 }
-                composable(Routes.PLAYLIST_ADD, arguments = listOf(navArgument("id") { type = NavType.LongType })) {
+                dest(Routes.PLAYLIST_ADD, arguments = listOf(navArgument("id") { type = NavType.LongType })) {
                     AddSongsScreen(it.arguments?.getLong("id") ?: 0L)
                 }
-                composable(Routes.SETTINGS) { SettingsScreen() }
-                composable(
+                dest(Routes.SETTINGS) { SettingsScreen() }
+                dest(
                     Routes.PLAYER,
                     enterTransition = { slideInVertically(tween(320)) { it } + fadeIn(tween(200)) },
                     exitTransition = { fadeOut(tween(160)) },
                     popEnterTransition = { fadeIn(tween(200)) },
                     popExitTransition = { slideOutVertically(tween(300)) { it } + fadeOut(tween(260)) },
                 ) { NowPlayingScreen() }
-                composable(
+                dest(
                     Routes.QUEUE,
                     enterTransition = { slideInVertically(tween(300)) { it / 3 } + fadeIn(tween(200)) },
                     popExitTransition = { slideOutVertically(tween(260)) { it / 3 } + fadeOut(tween(200)) },
                 ) { QueueScreen() }
-                composable(
+                dest(
                     Routes.VISUALIZER,
                     enterTransition = { fadeIn(tween(350)) },
                     popExitTransition = { fadeOut(tween(250)) },
@@ -280,6 +293,7 @@ private fun AppScaffold(
                 enter = fadeIn(tween(200)) + slideInVertically { it },
                 exit = fadeOut(tween(120)) + slideOutVertically { it },
             ) {
+              CompositionLocalProvider(LocalNavScope provides this) {
                 Column(
                     Modifier
                         .onSizeChanged { chromeHeightPx = it.height }
@@ -293,9 +307,33 @@ private fun AppScaffold(
                     }
                     BottomNavBar(selectedTab, onSelect = navigator::tab)
                 }
+              }
             }
         }
+        }
+       }
+      }
     }
+}
+
+/** A nav destination whose content knows its enter/exit animation, for shared artwork. */
+private fun NavGraphBuilder.dest(
+    route: String,
+    arguments: List<NamedNavArgument> = emptyList(),
+    enterTransition: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition?)? = null,
+    exitTransition: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition?)? = null,
+    popEnterTransition: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition?)? = enterTransition,
+    popExitTransition: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition?)? = exitTransition,
+    content: @Composable (NavBackStackEntry) -> Unit,
+) = composable(
+    route = route,
+    arguments = arguments,
+    enterTransition = enterTransition,
+    exitTransition = exitTransition,
+    popEnterTransition = popEnterTransition,
+    popExitTransition = popExitTransition,
+) { entry ->
+    CompositionLocalProvider(LocalNavScope provides this) { content(entry) }
 }
 
 private fun NavBackStackEntry.stringArg(name: String): String = arguments?.getString(name).orEmpty()

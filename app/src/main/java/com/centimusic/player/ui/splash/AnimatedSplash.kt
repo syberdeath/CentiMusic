@@ -113,14 +113,16 @@ private fun bounce(x: Float): Float {
     }
 }
 
+/** "Good morning" / "Good afternoon" / "Good evening" / "Late night", by the clock. */
+fun timeOfDayGreeting(): String = when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
+    in 5..11 -> "Good morning"
+    in 12..17 -> "Good afternoon"
+    in 18..21 -> "Good evening"
+    else -> "Late night"
+}
+
 private fun greeting(name: String): String {
-    val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
-    val part = when (hour) {
-        in 5..11 -> "Good morning"
-        in 12..17 -> "Good afternoon"
-        in 18..21 -> "Good evening"
-        else -> "Late night"
-    }
+    val part = timeOfDayGreeting()
     return if (name.isBlank()) part else "$part, ${name.trim()}"
 }
 

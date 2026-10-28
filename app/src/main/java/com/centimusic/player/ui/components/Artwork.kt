@@ -47,7 +47,7 @@ fun Artwork(
 ) {
     val context = LocalContext.current
     val px = with(LocalDensity.current) { sizeHint.roundToPx() }
-    val bitmap by produceState(initialValue = song?.let { ArtworkLoader.cached(it, px) }, song?.artworkKey, px) {
+    val bitmap by produceState(initialValue = song?.let { ArtworkLoader.cached(it, px) ?: ArtworkLoader.cachedAny(it) }, song?.artworkKey, px) {
         value = song?.let { ArtworkLoader.load(context, it, px) }
     }
     Box(

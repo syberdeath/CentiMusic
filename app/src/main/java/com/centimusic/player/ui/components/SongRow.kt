@@ -133,6 +133,7 @@ fun CoverCard(
     seed: Int? = null,
     titleStyle: androidx.compose.ui.text.TextStyle = NmTheme.type.bodySmall,
     onPlay: (() -> Unit)? = null,
+    artModifier: Modifier = Modifier,
 ) {
     Column(
         modifier
@@ -141,7 +142,7 @@ fun CoverCard(
     ) {
         Box {
             if (song != null || seed == null) {
-                Artwork(song, Modifier.fillMaxWidth().aspectRatio(1f), sizeHint = 192.dp)
+                Artwork(song, Modifier.fillMaxWidth().aspectRatio(1f).then(artModifier), sizeHint = 192.dp)
             } else {
                 ArtworkPlaceholder(seed, Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(Spacing.artworkCorner)))
             }
@@ -174,5 +175,9 @@ fun CoverCard(
 
 @Composable
 fun AlbumCard(album: Album, onClick: () -> Unit, modifier: Modifier = Modifier, onPlay: (() -> Unit)? = null) =
-    CoverCard(album.cover, album.title, album.artist, onClick, modifier, titleStyle = NmTheme.type.label, onPlay = onPlay)
+    CoverCard(
+        album.cover, album.title, album.artist, onClick, modifier,
+        titleStyle = NmTheme.type.label, onPlay = onPlay,
+        artModifier = Modifier.sharedArt(albumArtKey(album.key)),
+    )
 
