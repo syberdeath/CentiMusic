@@ -68,7 +68,6 @@ import com.centimusic.player.ui.theme.Spacing
 fun HomeScreen() {
     val vm = appViewModel { HomeViewModel(it) }
     val state by vm.state.collectAsStateWithLifecycle()
-    val week by vm.week.collectAsStateWithLifecycle()
     val access = LocalLibraryAccess.current
     val navigator = LocalNavigator.current
     val player = LocalAppContainer.current.player
@@ -138,9 +137,6 @@ fun HomeScreen() {
                         PillButton("Shuffle all", { player.shuffle(state.allSongs) }, icon = NmIcons.Shuffle, filled = true)
                         PillButton("All ${state.songCount} songs", navigator::songs, trailingIcon = NmIcons.ChevronRight)
                     }
-                    Spacer(Modifier.height(Spacing.m))
-                    // Nothing-style widget: this week's listening.
-                    WeekWidget(week, onClick = navigator::recentlyPlayed, modifier = Modifier.padding(horizontal = Spacing.gutter).fillMaxWidth())
                     Spacer(Modifier.height(Spacing.m))
                 }
                 val resumeSong = playback.current ?: state.recentlyPlayed.firstOrNull()
