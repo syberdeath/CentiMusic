@@ -27,6 +27,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -34,6 +36,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.PointMode
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
@@ -91,11 +94,11 @@ private class Timeline(
     val end: Float,
 )
 
-// Slower, calmer pacing: ~5.6 s full, ~2.3 s quick.
-private val FULL = Timeline(intro = 2600f, liftStart = 2400f, liftDur = 750f, wordStart = 2900f, stagger = 85f, scrambleLead = 340f,
-    greetStart = 3900f, sigStart = 4300f, end = 5600f)
-private val QUICK = Timeline(intro = 700f, liftStart = 520f, liftDur = 520f, wordStart = 720f, stagger = 38f, scrambleLead = 150f,
-    greetStart = 1050f, sigStart = 1200f, end = 2300f)
+// Unhurried pacing: ~7.4 s full, ~3.8 s quick.
+private val FULL = Timeline(intro = 3300f, liftStart = 3100f, liftDur = 950f, wordStart = 3700f, stagger = 110f, scrambleLead = 420f,
+    greetStart = 5000f, sigStart = 5500f, end = 7400f)
+private val QUICK = Timeline(intro = 1200f, liftStart = 1000f, liftDur = 750f, wordStart = 1300f, stagger = 70f, scrambleLead = 260f,
+    greetStart = 2100f, sigStart = 2400f, end = 3800f)
 
 private fun clamp01(x: Float) = x.coerceIn(0f, 1f)
 private fun easeOutCubic(x: Float) = 1f - (1f - clamp01(x)).pow(3)
@@ -129,47 +132,65 @@ private fun greeting(name: String): String {
 /**
  * CentiMusic launch animation. Four intros ([SplashStyle]) form the dot-equalizer mark, then a
  * shared outro lifts it, scrambles in the wordmark, greets the user and signs off with a
- * heartbeat. [SplashConfig.full] = false plays a ~2.3 s quick version. Tap anywhere to skip.
+ * heartbeat. [SplashConfig.full] = false plays a ~3.8 s quick version. Tap anywhere to skip.
  */
 @Composable
-fun AnimatedSplash(config: SplashConfig, onFinished: () -> Unit, modifier: Modifier = Modifier) {
+fun AnimatedSplash(
+    config: SplashConfig,
+    onFinished: () -> Unit,
+    modifier: Modifier = Modifier,
+    /** Called when the splash starts fading out, so the app underneath can start drawing again. */
+    onReveal: () -> Unit = {},
+) {
     val finish by rememberUpdatedState(onFinished)
+    val reveal by rememberUpdatedState(onReveal)
     val tl = if (config.full) FULL else QUICK
     val clock = remember(config) { Animatable(0f) }
     val exit = remember(config) { Animatable(1f) }
     val haptics = rememberHaptics()
 
     LaunchedEffect(config) {
+        // Let the app underneath finish its first heavy frames before starting, so the opening
+        // of the animation isn't skipped on slower phones.
+        repeat(3) { withFrameNanos { } }
+        delay(120)
         // Haptic cues: the mark completing, then the heartbeat.
         launch { delay(tl.intro.toLong()); haptics.confirm() }
         if (config.full) launch { delay((tl.sigStart + 120).toLong()); haptics.tick() }
         clock.animateTo(tl.end, tween(tl.end.toInt(), easing = LinearEasing))
-        exit.animateTo(0f, tween(450))
+        reveal()
+        exit.animateTo(0f, tween(600))
         finish()
     }
     LightBars()
 
-    val t = clock.value
-    val introP = clamp01(t / tl.intro)
-    val outro = clamp01((t - tl.intro) / 650f)
-    val lift = easeInOut((t - tl.liftStart) / tl.liftDur)
+    // The clock is only read inside draw / graphicsLayer blocks (and a derived wordmark), so each
+    // frame just redraws instead of recomposing the whole screen.
+    val wordmark by remember(config) {
+        derivedStateOf { scrambledWordmark((clock.value / 45f).toInt() * 45f, tl) }
+    }
+    val grid = remember { DotGridCache() }
 
     Box(
         modifier
             .fillMaxSize()
             .graphicsLayer { alpha = exit.value }
             .background(SplashBlack)
-            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { finish() }
+            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) { reveal(); finish() }
             .semantics { contentDescription = "CentiMusic, made by Vincent with love" },
         contentAlignment = Alignment.Center,
     ) {
         Canvas(Modifier.fillMaxSize()) {
+            val t = clock.value
+            val introP = clamp01(t / tl.intro)
+            val outro = clamp01((t - tl.intro) / 650f)
+            val lift = easeInOut((t - tl.liftStart) / tl.liftDur)
             val unit = 288.dp.toPx() / 108f * (1f - 0.28f * lift)
             val center = Offset(size.width / 2f, size.height / 2f - 64.dp.toPx() * lift)
             val logo = Logo(center, unit)
             if (config.full) {
                 when (config.style) {
-                    SplashStyle.BOOT -> boot(logo, introP, outro)
+                    SplashStyle.BOOT -> boot(logo, introP, outro, grid)
                     SplashStyle.GLYPH -> glyph(logo, introP, outro)
                     SplashStyle.PULSE -> pulse(logo, introP, outro)
                     SplashStyle.VINYL -> vinyl(logo, introP, outro)
@@ -183,30 +204,30 @@ fun AnimatedSplash(config: SplashConfig, onFinished: () -> Unit, modifier: Modif
 
         Column(Modifier.offset(y = 40.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                scrambledWordmark(t, tl),
+                wordmark,
                 style = DefaultNmType.screenTitle.copy(fontSize = 38.sp, letterSpacing = 1.sp),
                 color = Color.White,
             )
             Spacer(Modifier.height(10.dp))
-            val greet = easeOutCubic((t - tl.greetStart) / 600f)
             Text(
                 greeting(config.name),
                 style = DefaultNmType.dotCaption.copy(fontSize = 14.sp),
                 color = Color(0xFFA0A0A0),
                 modifier = Modifier.graphicsLayer {
+                    val greet = easeOutCubic((clock.value - tl.greetStart) / 700f)
                     alpha = greet
                     translationY = 8.dp.toPx() * (1f - greet)
                 },
             )
         }
         // Signature sits at the bottom of the screen.
-        val sig = easeOutCubic((t - tl.sigStart) / 600f)
         Row(
             Modifier
                 .align(Alignment.BottomCenter)
                 .navigationBarsPadding()
                 .padding(bottom = 40.dp)
                 .graphicsLayer {
+                    val sig = easeOutCubic((clock.value - tl.sigStart) / 700f)
                     alpha = sig
                     translationY = 12.dp.toPx() * (1f - sig)
                 },
@@ -214,7 +235,6 @@ fun AnimatedSplash(config: SplashConfig, onFinished: () -> Unit, modifier: Modif
         ) {
             Text("Made by Vincent with", style = DefaultNmType.bodySmall, color = Color(0xFF8A8A8A))
             Spacer(Modifier.width(6.dp))
-            val beat = heartbeat(t - tl.sigStart)
             Icon(
                 NmIcons.HeartFilled,
                 contentDescription = null,
@@ -222,6 +242,7 @@ fun AnimatedSplash(config: SplashConfig, onFinished: () -> Unit, modifier: Modif
                 modifier = Modifier
                     .size(16.dp)
                     .graphicsLayer {
+                        val beat = heartbeat(clock.value - tl.sigStart)
                         scaleX = beat
                         scaleY = beat
                     },
@@ -285,23 +306,51 @@ private fun DrawScope.dropAccent(logo: Logo, q: Float) {
     drawCircle(AccentRed, radius = logo.radius, center = Offset(target.x, y), alpha = clamp01(q * 3f))
 }
 
+/** Background dot positions, computed once per screen size. */
+private class DotGridCache {
+    private var forSize = Size.Zero
+    var xs = FloatArray(0); private set
+    var ys = FloatArray(0); private set
+    val buckets = Array(BUCKETS) { ArrayList<Offset>(256) }
+
+    fun ensure(size: Size, step: Float) {
+        if (size == forSize) return
+        forSize = size
+        val cols = (size.width / step).toInt() + 1
+        val rows = (size.height / step).toInt() + 1
+        val ox = (size.width % step) / 2f
+        val oy = (size.height % step) / 2f
+        xs = FloatArray(cols * rows) { ox + (it % cols) * step }
+        ys = FloatArray(cols * rows) { oy + (it / cols) * step }
+    }
+}
+
+private const val BUCKETS = 8
+
 /** 1 · Boot-up: a wave lights the dot grid from the centre, revealing the mark. */
-private fun DrawScope.boot(logo: Logo, p: Float, outro: Float) {
-    val step = 22.dp.toPx()
+private fun DrawScope.boot(logo: Logo, p: Float, outro: Float, grid: DotGridCache) {
+    grid.ensure(size, 22.dp.toPx())
     val maxDist = hypot(size.width, size.height) / 2f
     val front = easeOutCubic(p) * maxDist * 1.25f
     val band = 46.dp.toPx()
-    var y = (size.height % step) / 2f
-    while (y < size.height) {
-        var x = (size.width % step) / 2f
-        while (x < size.width) {
-            val d = hypot(x - logo.center.x, y - logo.center.y)
-            val wave = exp(-((d - front) / band).pow(2))
-            val lit = if (d < front) 0.07f else 0.025f
-            drawCircle(Color.White, radius = 1.1.dp.toPx(), center = Offset(x, y), alpha = (lit + 0.6f * wave * (1f - outro)).coerceIn(0f, 1f))
-            x += step
-        }
-        y += step
+    // Sort dots into a few brightness levels and draw each level in one call, instead of
+    // hundreds of separate circles per frame.
+    grid.buckets.forEach { it.clear() }
+    for (k in grid.xs.indices) {
+        val x = grid.xs[k]
+        val y = grid.ys[k]
+        val d = hypot(x - logo.center.x, y - logo.center.y)
+        val z = (d - front) / band
+        val wave = if (z > -3f && z < 3f) exp(-z * z) else 0f
+        val lit = if (d < front) 0.07f else 0.025f
+        val a = (lit + 0.6f * wave * (1f - outro)).coerceIn(0f, 1f)
+        grid.buckets[(a * (BUCKETS - 1) / 0.67f).toInt().coerceIn(0, BUCKETS - 1)].add(Offset(x, y))
+    }
+    val dot = 2.2.dp.toPx()
+    grid.buckets.forEachIndexed { level, points ->
+        if (points.isEmpty()) return@forEachIndexed
+        val alpha = (0.025f + level * 0.67f / (BUCKETS - 1)).coerceAtMost(1f)
+        drawPoints(points, PointMode.Points, Color.White, strokeWidth = dot, cap = StrokeCap.Round, alpha = alpha)
     }
     drawLogo(logo, includeAccent = false) { c, i ->
         val d = hypot(logo.dot(c, i).x - logo.center.x, logo.dot(c, i).y - logo.center.y)

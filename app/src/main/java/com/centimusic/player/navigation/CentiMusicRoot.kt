@@ -68,6 +68,7 @@ import com.centimusic.player.ui.components.BottomNavBar
 import com.centimusic.player.ui.components.dotGrid
 import com.centimusic.player.ui.components.GlyphToast
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import com.centimusic.player.ui.components.MiniPlayer
@@ -125,12 +126,14 @@ fun CentiMusicRoot(container: AppContainer) {
         var showSplash by rememberSaveable { mutableStateOf(true) }
         var splashConfig by remember { mutableStateOf<SplashConfig?>(null) }
         var forceFullSplash by remember { mutableStateOf(false) }
+        var splashRevealing by remember { mutableStateOf(false) }
         // Decide which launch animation to play: full on the first launch of the day, quick after.
         LaunchedEffect(showSplash) {
             if (!showSplash) {
                 splashConfig = null
                 return@LaunchedEffect
             }
+            splashRevealing = false
             val p = container.preferences.preferences.first()
             val today = java.text.SimpleDateFormat("yyyy-DDD", java.util.Locale.US).format(java.util.Date())
             val full = forceFullSplash || p.alwaysFullSplash || p.lastFullSplashDay != today
@@ -167,7 +170,11 @@ fun CentiMusicRoot(container: AppContainer) {
             LocalReplaySplash provides replaySplash,
         ) {
             Box(Modifier.fillMaxSize()) {
-                AppScaffold(navController, navigator, container, snackbar)
+                // While the opaque splash covers it, the app isn't drawn at all (its animations would
+                // otherwise compete with the splash for frames on slower phones).
+                Box(Modifier.fillMaxSize().graphicsLayer { alpha = if (showSplash && !splashRevealing) 0f else 1f }) {
+                    AppScaffold(navController, navigator, container, snackbar)
+                }
                 SongActionsHost(songMenu)
                 SongDeleteHost(songDeleter)
                 if (showSplash) {
@@ -176,7 +183,7 @@ fun CentiMusicRoot(container: AppContainer) {
                         // A frame or two while preferences load: stay black like the system splash.
                         Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color(0xFF080808)))
                     } else {
-                        AnimatedSplash(config, onFinished = { showSplash = false })
+                        AnimatedSplash(config, onFinished = { showSplash = false }, onReveal = { splashRevealing = true })
                     }
                 }
             }
