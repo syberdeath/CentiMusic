@@ -56,6 +56,27 @@ UI state flows one way: repositories expose `Flow`s → ViewModels combine them 
 state → Compose renders it. Every playback command goes through the `MediaController`, so the
 app, notification, lock screen and headset buttons always agree.
 
+## CentiCalc (calculator)
+
+The `:calculator` module is a second, separate app: a calculator in the same design language
+(dot-matrix display, monochrome keys, one red **=** key). It installs next to CentiMusic as
+**CentiCalc** (`com.centimusic.calculator`) and needs no permissions.
+
+| Mode | Keys |
+| --- | --- |
+| **Basic** | Digits, `.`, `+ − × ÷`, `%`, `+/−`, `AC`, `DEL` (hold to clear), `=`, with a live result preview. |
+| **Scientific** | `sin cos tan` and their inverses, `ln log`, `eˣ 10ˣ`, `√x ∛x`, `x² x³ xʸ 1/x`, `x!`, `π e`, brackets, DEG/RAD. `2ND` switches keys to their inverses. Landscape always shows scientific keys. |
+
+Implied closing brackets, implicit multiplication (`2π`, `3(4)`), exact textbook angles in degrees
+(`sin 180 = 0`, `tan 90` is an error), 12 significant digits, and clear errors ("Can't divide by 0").
+History (last 50, tap one to reuse its answer), the angle unit and the Basic/Sci choice are kept
+between launches. The expression engine (`calculator/.../engine`) is plain Kotlin with unit tests.
+
+```bash
+./gradlew :calculator:assembleDebug    # → calculator/build/outputs/apk/debug/calculator-debug.apk
+./gradlew :calculator:testDebugUnitTest
+```
+
 ## Building
 
 Requirements: JDK 17+ and the Android SDK (platform 35). Android Studio Ladybug or newer works out of the box.
@@ -87,7 +108,7 @@ machine's own debug key.
 ### CI
 
 `.github/workflows/android.yml` builds the debug APK and runs the unit tests on every push. The APK
-is attached to each run as **CentiMusic.apk**, uploaded un-zipped so it installs straight from the download.
+is attached to each run as **CentiMusic.apk** (and the calculator as **CentiCalc.apk**), uploaded un-zipped so it installs straight from the download.
 
 ## Visualizer and the lock screen
 

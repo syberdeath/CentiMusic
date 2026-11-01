@@ -47,13 +47,23 @@ jobs:
       # Uploaded as a plain .apk (not zipped) so it can be installed straight from the download.
       - name: Upload APK
         if: steps.signing.outputs.present == 'true'
-        run: cp app/build/outputs/apk/debug/app-debug.apk CentiMusic.apk
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk CentiMusic.apk
+          cp calculator/build/outputs/apk/debug/calculator-debug.apk CentiCalc.apk
 
       - name: Upload APK artifact
         if: steps.signing.outputs.present == 'true'
         uses: actions/upload-artifact@v7
         with:
           path: CentiMusic.apk
+          archive: false
+          if-no-files-found: error
+
+      - name: Upload CentiCalc APK artifact
+        if: steps.signing.outputs.present == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          path: CentiCalc.apk
           archive: false
           if-no-files-found: error
 
@@ -73,4 +83,6 @@ jobs:
           path: |
             app/build/reports/
             app/build/test-results/
+            calculator/build/reports/
+            calculator/build/test-results/
           if-no-files-found: ignore
