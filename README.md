@@ -89,6 +89,35 @@ machine's own debug key.
 `.github/workflows/android.yml` builds the debug APK and runs the unit tests on every push. The APK
 is attached to each run as **CentiMusic.apk**, uploaded un-zipped so it installs straight from the download.
 
+## CentiFiles (file manager)
+
+The `files/` module is a second app, **CentiFiles**: a file manager laid out like Google's Files app,
+drawn in CentiMusic's Nothing-inspired design (dot-matrix headings, monochrome surfaces, one red accent).
+It is an original implementation and is not affiliated with Google or Nothing.
+
+| Area | What it does |
+| --- | --- |
+| **Browse** | Search pill, Recent files strip with thumbnails, Categories (Downloads, Images, Videos, Audio, Documents, Apps) with counts and sizes, Favourites, and an Internal storage card with a dot-matrix usage gauge. |
+| **Folders** | Breadcrumb path, list or grid view, sort by name/date/size/type, show hidden files, new folder. Long-press to multi-select. |
+| **File actions** | Open with the right app, share, copy, move (paste-here bar with progress), rename, file info, favourite, delete (with confirmation). Name clashes become "name (1).ext"; nothing is overwritten. |
+| **Clean** | Free space headline and gauge, then cards for junk (thumbnail caches, empty folders, app cache), duplicate files (MD5-verified, oldest copy kept), large files (over 100 MB), old downloads (90+ days) and old screenshots (30+ days). Review, select, delete. |
+| **Search** | Name search across storage (files and folders), recent searches, show in folder. |
+| **Settings** | Theme (System/Light/Dark), default view, hidden files, confirm before delete, refresh index. |
+
+Thumbnails cover images, videos, embedded audio artwork and APK icons. Category, search and Clean data
+come from MediaStore's file index (falling back to a file-system walk); folders are read directly.
+
+**Permissions:** `MANAGE_EXTERNAL_STORAGE` ("All files access", granted in system settings) on Android 11+,
+`READ/WRITE_EXTERNAL_STORAGE` on Android 8–10, and `REQUEST_INSTALL_PACKAGES` so APKs can be opened
+with the installer. No network permission.
+
+```bash
+./gradlew :files:assembleDebug   # → files/build/outputs/apk/debug/files-debug.apk
+./gradlew :files:testDebugUnitTest
+```
+
+CI builds it alongside CentiMusic and attaches it as **CentiFiles.apk**.
+
 ## Visualizer and the lock screen
 
 ### How the waveform is driven
