@@ -118,6 +118,11 @@ with the installer. No network permission.
 
 CI builds it alongside CentiMusic and attaches it as **CentiFiles.apk**.
 
+**Download (always the newest build):**
+[CentiFiles.apk](https://github.com/syberdeath/CentiMusic/releases/latest/download/CentiFiles.apk) ·
+[CentiMusic.apk](https://github.com/syberdeath/CentiMusic/releases/latest/download/CentiMusic.apk).
+Every build from `main`, and every manual run of the workflow, is published as the latest release.
+
 ## Visualizer and the lock screen
 
 ### How the waveform is driven

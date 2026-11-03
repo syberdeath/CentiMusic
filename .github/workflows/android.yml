@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # publish the APKs to a GitHub Release
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
@@ -66,6 +68,25 @@ jobs:
           path: CentiFiles.apk
           archive: false
           if-no-files-found: error
+
+      # Each build from main (or a manual run) becomes the newest release, so these links always
+      # serve the latest APKs, no sign-in needed:
+      #   https://github.com/<owner>/<repo>/releases/latest/download/CentiFiles.apk
+      #   https://github.com/<owner>/<repo>/releases/latest/download/CentiMusic.apk
+      - name: Publish release
+        if: >-
+          steps.signing.outputs.present == 'true' &&
+          (github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          name: Build ${{ github.run_number }}
+          body: Built from ${{ github.ref_name }} at ${{ github.sha }}.
+          make_latest: true
+          files: |
+            CentiFiles.apk
+            CentiMusic.apk
 
       # The code compiled and tests ran above; without the permanent key the APK couldn't update an
       # installed CentiMusic, so don't publish it.
