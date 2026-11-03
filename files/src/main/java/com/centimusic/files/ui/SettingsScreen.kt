@@ -81,7 +81,7 @@ fun SettingsScreen(vm: AppViewModel) {
                 }
                 Spacer(Modifier.height(Spacing.s))
                 Text(
-                    "A calm, offline file manager in the same design language as CentiMusic. No accounts, no network, no tracking.",
+                    "A calm, offline file manager for everything on your phone. No accounts, no network, no tracking.",
                     style = NmTheme.type.body, color = c.textSecondary,
                 )
                 Spacer(Modifier.height(Spacing.s))

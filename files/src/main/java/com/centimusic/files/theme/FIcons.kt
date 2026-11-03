@@ -10,7 +10,7 @@ import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 
 /**
- * CentiFiles icon set, drawn like CentiMusic's: a 24-unit grid, one 1.6 stroke weight, round caps.
+ * CentiFiles icon set: a 24-unit grid, one 1.6 stroke weight, round caps.
  * Tinted by [androidx.compose.material3.Icon].
  */
 object FIcons {
