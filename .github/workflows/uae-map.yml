@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
   # Manual runs need this file on the default branch; until then, a change to it builds the map.
   push:
+    branches: ["ccr-**"]
     paths: [.github/workflows/uae-map.yml]
 
 permissions:
@@ -24,11 +25,24 @@ jobs:
       - name: Download Planetiler
         run: curl -fsSL --retry 3 -o planetiler.jar https://github.com/onthegomap/planetiler/releases/latest/download/planetiler.jar
 
-      # gcc-states is the smallest Geofabrik extract that contains the UAE; --bounds clips it to the UAE.
+      # Fetched here with retries (Planetiler's own downloader gives up on a slow server).
+      # gcc-states is the smallest Geofabrik extract that contains the UAE.
+      - name: Download sources
+        run: |
+          mkdir -p data/sources
+          get() { curl -fL --retry 5 --retry-delay 10 --retry-all-errors --connect-timeout 30 -o "data/sources/$1" "$2"; }
+          get gcc_states.osm.pbf https://download.geofabrik.de/asia/gcc-states-latest.osm.pbf
+          get water-polygons-split-3857.zip https://osmdata.openstreetmap.de/download/water-polygons-split-3857.zip
+          get natural_earth_vector.sqlite.zip https://naciscdn.org/naturalearth/packages/natural_earth_vector.sqlite.zip
+          get lake_centerline.shp.zip https://github.com/acalcutt/osm-lakelines/releases/download/v12/lake_centerline.shp.zip
+          ls -la data/sources
+
+      # --bounds clips the GCC extract to the UAE.
       - name: Build uae.pmtiles
         run: |
           java -Xmx6g -jar planetiler.jar \
-            --download --area=gcc-states \
+            --area=gcc-states \
+            --osm-path=data/sources/gcc_states.osm.pbf \
             --bounds=51.4,22.5,56.5,26.3 \
             --maxzoom=14 \
             --output=uae.pmtiles
