@@ -13,3 +13,5 @@
 # Signing keys never belong in the repo (CI gets them from secrets).
 *.jks
 *.keystore
+/launcher/build/
+/launcher/src/main/assets/map/fonts/

@@ -80,6 +80,8 @@ dependencies {
     debugImplementation(libs.compose.ui.test.manifest)
 
     implementation(libs.coroutines.android)
+    implementation(libs.datastore.preferences)
+    implementation(libs.maplibre.android)
 
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)

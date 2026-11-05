@@ -37,6 +37,9 @@ jobs:
           echo "CENTIMUSIC_KEY_PASSWORD=$KEY_PASSWORD" >> "$GITHUB_ENV"
           echo "present=true" >> "$GITHUB_OUTPUT"
 
+      - name: Fetch map fonts for the launcher
+        run: launcher/scripts/fetch-fonts.sh
+
       - name: Build debug APK and run unit tests
         run: ./gradlew --no-daemon --stacktrace assembleDebug testDebugUnitTest 2>&1 | tee build.log; exit ${PIPESTATUS[0]}
         shell: bash

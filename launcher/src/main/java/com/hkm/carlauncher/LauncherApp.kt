@@ -1,6 +1,10 @@
 package com.hkm.carlauncher
 
 import android.app.Application
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import org.maplibre.android.MapLibre
 
 class LauncherApp : Application() {
     lateinit var graph: AppGraph
@@ -8,9 +12,7 @@ class LauncherApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        graph = AppGraph()
+        MapLibre.getInstance(this)
+        graph = AppGraph(this, CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate))
     }
 }
-
-/** Holds the launcher's single instances; filled in as the units are added. */
-class AppGraph
