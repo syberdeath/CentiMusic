@@ -26,18 +26,20 @@ interface MapDownloader {
 }
 
 /**
- * Keeps the UAE offline map in [dir]. New files land in `uae.pmtiles.part`, are verified, then
- * replace `uae.pmtiles`; the marker `uae.pmtiles.ok` (checksum and size) is written last. A file
- * without a matching marker, such as one left by a crash or reboot mid-install, is never used.
+ * Keeps the UAE offline map in [dir]. A new file lands in `uae.pmtiles.part`, is verified, then is
+ * renamed to `uae-<sha>.pmtiles`; only then does the marker `uae.ok` (file name, checksum, size)
+ * switch to it, and the old file is removed. Each map has its own name, so the map view always
+ * reloads after an update. A file the marker doesn't name, e.g. one left by a crash or reboot
+ * mid-install, is never used.
  */
 class OfflineMapStore(
     private val dir: File,
     private val sha256Fetcher: suspend () -> String?,
     private val downloader: MapDownloader,
 ) {
-    private val final = File(dir, "uae.pmtiles")
     private val part = File(dir, "uae.pmtiles.part")
-    private val marker = File(dir, "uae.pmtiles.ok")
+    private val marker = File(dir, "uae.ok")
+    private val markerTmp = File(dir, "uae.ok.tmp")
 
     private val _installedFile = MutableStateFlow(verifiedFile())
     val installedFile: StateFlow<File?> = _installedFile.asStateFlow()
@@ -62,13 +64,16 @@ class OfflineMapStore(
         }
     }
 
-    /** Copies a map file chosen by the user (e.g. from USB). Without a checksum, only the PMTiles header is checked. */
-    suspend fun import(input: InputStream, expectedSha256: String?) {
+    /**
+     * Copies a map file chosen by the user (e.g. from USB); [open] may throw if the stick was removed.
+     * Without a checksum, only the PMTiles header is checked.
+     */
+    suspend fun import(open: () -> InputStream, expectedSha256: String?) {
         try {
             withContext(Dispatchers.IO) {
                 dir.mkdirs()
                 part.delete()
-                input.use { src -> part.outputStream().use { src.copyTo(it) } }
+                open().use { src -> part.outputStream().use { src.copyTo(it) } }
             }
             install(expectedSha256?.trim()?.lowercase(), checkMagic = expectedSha256 == null, damaged = "This file isn't the UAE map, or it is damaged.")
         } catch (e: CancellationException) {
@@ -81,8 +86,7 @@ class OfflineMapStore(
 
     fun delete() {
         marker.delete()
-        final.delete()
-        part.delete()
+        dir.listFiles { f -> f.name.startsWith("uae") }?.forEach { it.delete() }
         _installedFile.value = null
         _status.value = OfflineMapStatus.NotInstalled
     }
@@ -91,15 +95,21 @@ class OfflineMapStore(
         val actual = withContext(Dispatchers.IO) { sha256Hex(part) }
         val ok = if (checkMagic) hasPmtilesHeader(part) else actual == expectedSha
         if (!ok) return fail(damaged)
-        withContext(Dispatchers.IO) {
-            marker.delete()
-            if (!part.renameTo(final)) {
-                final.delete()
-                check(part.renameTo(final)) { "couldn't replace the map file" }
+        val previous = _installedFile.value
+        val target = withContext(Dispatchers.IO) {
+            val target = File(dir, "uae-${actual.take(12)}.pmtiles")
+            if (target != previous) target.delete()
+            if (target == previous || !part.renameTo(target)) {
+                // Same map already installed (re-import of the same file): keep it as is.
+                check(target == previous) { "couldn't store the map file" }
+                part.delete()
             }
-            marker.writeText("$actual ${final.length()}")
+            markerTmp.writeText("${target.name} $actual ${target.length()}")
+            check(markerTmp.renameTo(marker)) { "couldn't record the map file" }
+            if (previous != null && previous != target) previous.delete()
+            target
         }
-        _installedFile.value = final
+        _installedFile.value = target
         _status.value = installedStatus()
     }
 
@@ -109,9 +119,11 @@ class OfflineMapStore(
     }
 
     private fun verifiedFile(): File? {
-        if (!final.exists() || !marker.exists()) return null
-        val size = marker.readText().trim().split(" ").getOrNull(1)?.toLongOrNull() ?: return null
-        return final.takeIf { it.length() == size }
+        if (!marker.exists()) return null
+        val parts = marker.readText().trim().split(" ")
+        val file = parts.getOrNull(0)?.let { File(dir, it) } ?: return null
+        val size = parts.getOrNull(2)?.toLongOrNull() ?: return null
+        return file.takeIf { it.exists() && it.length() == size }
     }
 
     private fun installedStatus(): OfflineMapStatus =

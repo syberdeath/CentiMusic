@@ -54,8 +54,9 @@ class MainActivity : ComponentActivity() {
 
     private val importMap = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
         if (uri != null) lifecycleScope.launch {
-            val input = contentResolver.openInputStream(uri) ?: return@launch
-            graph.mapStore.import(input, expectedSha256 = if (graph.online.value) MapRelease.fetchSha256() else null)
+            val sha = if (graph.online.value) MapRelease.fetchSha256() else null
+            // Opening can fail (USB stick removed); the store reports that as a failed import.
+            graph.mapStore.import({ contentResolver.openInputStream(uri) ?: error("file not readable") }, expectedSha256 = sha)
         }
     }
 

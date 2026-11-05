@@ -36,7 +36,7 @@ class OfflineMapStoreTest {
     fun verifiedDownloadInstalls() = runTest {
         val s = store(sha(good), FakeDownloader(good))
         s.download()
-        assertEquals(File(dir, "uae.pmtiles"), s.installedFile.value)
+        assertInstalled(s, good)
         assertTrue(s.status.value is OfflineMapStatus.Installed)
         assertEquals(good.size.toLong(), (s.status.value as OfflineMapStatus.Installed).sizeBytes)
     }
@@ -45,12 +45,12 @@ class OfflineMapStoreTest {
     fun installedFileSurvivesNewInstance() = runTest {
         store(sha(good), FakeDownloader(good)).download()
         val again = store(null, FakeDownloader(ByteArray(0)))
-        assertEquals(File(dir, "uae.pmtiles"), again.installedFile.value)
+        assertInstalled(again, good)
     }
 
     @Test
     fun unverifiedFileIsNotInstalled() {
-        File(dir, "uae.pmtiles").writeBytes(good) // e.g. crash before the marker was written
+        File(dir, "uae-0123456789ab.pmtiles").writeBytes(good) // e.g. crash before the marker was written
         val s = store(null, FakeDownloader(good))
         assertNull(s.installedFile.value)
         assertEquals(OfflineMapStatus.NotInstalled, s.status.value)
@@ -58,8 +58,9 @@ class OfflineMapStoreTest {
 
     @Test
     fun truncatedFileIsNotInstalled() = runTest {
-        store(sha(good), FakeDownloader(good)).download()
-        File(dir, "uae.pmtiles").writeBytes(good.copyOf(10))
+        val s = store(sha(good), FakeDownloader(good))
+        s.download()
+        s.installedFile.value!!.writeBytes(good.copyOf(10))
         assertNull(store(null, FakeDownloader(good)).installedFile.value)
     }
 
@@ -71,8 +72,7 @@ class OfflineMapStoreTest {
         val s2 = store("0".repeat(64), FakeDownloader(other))
         s2.download()
         assertTrue(s2.status.value is OfflineMapStatus.Failed)
-        assertEquals(File(dir, "uae.pmtiles"), s2.installedFile.value)
-        assertTrue(File(dir, "uae.pmtiles").readBytes().contentEquals(good))
+        assertInstalled(s2, good)
         assertFalse(File(dir, "uae.pmtiles.part").exists())
     }
 
@@ -96,20 +96,20 @@ class OfflineMapStoreTest {
     @Test
     fun importWithoutChecksumChecksMagic() = runTest {
         val s = store(null, FakeDownloader(good))
-        s.import(ByteArrayInputStream("hello".toByteArray()), expectedSha256 = null)
+        s.import({ ByteArrayInputStream("hello".toByteArray()) }, expectedSha256 = null)
         assertTrue(s.status.value is OfflineMapStatus.Failed)
         assertNull(s.installedFile.value)
-        s.import(ByteArrayInputStream(good), expectedSha256 = null)
-        assertEquals(File(dir, "uae.pmtiles"), s.installedFile.value)
+        s.import({ ByteArrayInputStream(good) }, expectedSha256 = null)
+        assertInstalled(s, good)
     }
 
     @Test
     fun importWithChecksumVerifies() = runTest {
         val s = store(null, FakeDownloader(good))
-        s.import(ByteArrayInputStream(good), expectedSha256 = "f".repeat(64))
+        s.import({ ByteArrayInputStream(good) }, expectedSha256 = "f".repeat(64))
         assertNull(s.installedFile.value)
-        s.import(ByteArrayInputStream(good), expectedSha256 = sha(good).uppercase())
-        assertEquals(File(dir, "uae.pmtiles"), s.installedFile.value)
+        s.import({ ByteArrayInputStream(good) }, expectedSha256 = sha(good).uppercase())
+        assertInstalled(s, good)
     }
 
     @Test
@@ -136,6 +136,30 @@ class OfflineMapStoreTest {
         storeRef = s
         s.download()
         assertEquals(OfflineMapStatus.Downloading(42), seen.single())
+    }
+
+    private fun assertInstalled(s: OfflineMapStore, bytes: ByteArray) {
+        val f = s.installedFile.value
+        assertTrue("installed file", f != null && f.exists() && f.readBytes().contentEquals(bytes))
+    }
+
+    @Test
+    fun updateInstallsUnderANewName() = runTest {
+        // A new map must change the source so the map view reloads it (same path would be cached).
+        val first = store(sha(good), FakeDownloader(good)).also { it.download() }.installedFile.value!!
+        val other = good + byteArrayOf(7)
+        val s = store(sha(other), FakeDownloader(other))
+        s.download()
+        assertInstalled(s, other)
+        assertTrue(s.installedFile.value != first)
+        assertFalse("old file removed", first.exists())
+    }
+
+    @Test
+    fun unreadableImportSourceFailsWithoutCrash() = runTest {
+        val s = store(null, FakeDownloader(good))
+        s.import({ throw java.io.FileNotFoundException("USB removed") }, expectedSha256 = null)
+        assertTrue(s.status.value is OfflineMapStatus.Failed)
     }
 
     private var storeRef: OfflineMapStore? = null
