@@ -32,7 +32,23 @@ jobs:
           mkdir -p data/sources
           get() { curl -fL --retry 5 --retry-delay 10 --retry-all-errors --connect-timeout 30 -o "data/sources/$1" "$2"; }
           get gcc_states.osm.pbf https://download.geofabrik.de/asia/gcc-states-latest.osm.pbf
-          get water-polygons-split-3857.zip https://osmdata.openstreetmap.de/download/water-polygons-split-3857.zip
+          if ! get water-polygons-split-3857.zip https://osmdata.openstreetmap.de/download/water-polygons-split-3857.zip \
+             && ! get water-polygons-split-3857.zip http://osmdata.openstreetmap.de/download/water-polygons-split-3857.zip; then
+            # Last resort: an empty ocean layer. Roads, places and lakes still render; the sea shows as land.
+            echo "::warning::Ocean polygons unavailable; building the map without them."
+            pip install --quiet pyshp
+            python3 - <<'PY'
+          import os, zipfile, shapefile
+          os.makedirs("water-polygons-split-3857", exist_ok=True)
+          w = shapefile.Writer("water-polygons-split-3857/water_polygons", shapeType=shapefile.POLYGON)
+          w.field("x", "N")
+          w.close()
+          open("water-polygons-split-3857/water_polygons.prj", "w").write('PROJCS["WGS 84 / Pseudo-Mercator",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Mercator_1SP"],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1],AUTHORITY["EPSG","3857"]]')
+          with zipfile.ZipFile("data/sources/water-polygons-split-3857.zip", "w") as z:
+              for f in os.listdir("water-polygons-split-3857"):
+                  z.write(os.path.join("water-polygons-split-3857", f))
+          PY
+          fi
           get natural_earth_vector.sqlite.zip https://naciscdn.org/naturalearth/packages/natural_earth_vector.sqlite.zip
           get lake_centerline.shp.zip https://github.com/acalcutt/osm-lakelines/releases/download/v12/lake_centerline.shp.zip
           ls -la data/sources
