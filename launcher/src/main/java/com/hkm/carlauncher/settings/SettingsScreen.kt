@@ -43,6 +43,7 @@ fun SettingsScreen(
     hasLocation: Boolean,
     hasMediaAccess: Boolean,
     versionName: String,
+    gpsStatus: String = "",
     onPickNavigation: (String) -> Unit,
     onDownloadMap: () -> Unit,
     onImportMap: () -> Unit,
@@ -81,6 +82,9 @@ fun SettingsScreen(
                 Section("Permissions") {
                     PermissionRow("Location", hasLocation, "Allow location", onGrantLocation)
                     PermissionRow("Now playing (notification access)", hasMediaAccess, "Allow media access", onGrantMediaAccess)
+                }
+                if (gpsStatus.isNotEmpty()) Section("GPS status") {
+                    Text(gpsStatus, color = LauncherColors.Muted, fontSize = 15.sp)
                 }
                 Section("Home app") {
                     Text("Make HKM Launcher open when you press Home.", color = LauncherColors.Muted, fontSize = 15.sp)

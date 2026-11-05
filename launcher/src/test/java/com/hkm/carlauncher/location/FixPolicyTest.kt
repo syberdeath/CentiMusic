@@ -53,4 +53,14 @@ class FixPolicyTest {
             waitingText(GpsDiagnostics(providers = listOf("network", "passive"))),
         )
     }
+
+    @Test
+    fun statusReportForSettings() {
+        val d = GpsDiagnostics(listOf("gps", "network"), satellitesUsed = 0, satellitesInView = 4, errors = listOf("gps: IllegalArgumentException"))
+        assertEquals(
+            "No position yet\nSources: gps, network\nSatellites: 0 used of 4 in view\nProblem: gps: IllegalArgumentException",
+            gpsStatusText(d, LocationState.Waiting(null)),
+        )
+        assertEquals("Position from network", gpsStatusText(GpsDiagnostics(), LocationState.Live(fix("network", 0))))
+    }
 }

@@ -32,6 +32,8 @@ import com.hkm.carlauncher.home.HomeCallbacks
 import com.hkm.carlauncher.home.HomeScreen
 import com.hkm.carlauncher.home.Screen
 import com.hkm.carlauncher.home.ScreenHost
+import com.hkm.carlauncher.location.gpsStatusText
+import com.hkm.carlauncher.location.waitingText
 import com.hkm.carlauncher.map.MapPanel
 import com.hkm.carlauncher.map.MapRelease
 import com.hkm.carlauncher.settings.SettingsScreen
@@ -94,6 +96,7 @@ class MainActivity : ComponentActivity() {
         val clock by graph.clock.text.collectAsStateWithLifecycle()
         val nowPlaying by graph.nowPlaying.state.collectAsStateWithLifecycle()
         val location by graph.location.state.collectAsStateWithLifecycle()
+        val gps by graph.location.diagnostics.collectAsStateWithLifecycle()
         val mapSource by graph.mapSource.collectAsStateWithLifecycle()
         val mapStatus by graph.mapStore.status.collectAsStateWithLifecycle()
         val online by graph.online.collectAsStateWithLifecycle()
@@ -130,6 +133,7 @@ class MainActivity : ComponentActivity() {
                         source = mapSource,
                         location = location,
                         showHint = launchCount <= 3,
+                        waitingText = waitingText(gps),
                         onTap = { openNavigation(navPackage, apps, graph.launcher) { screen = Screen.SETTINGS } },
                         onAllowLocation = ::requestLocation,
                         onGetMap = { screen = Screen.SETTINGS },
@@ -149,6 +153,7 @@ class MainActivity : ComponentActivity() {
                 mapStatus = mapStatus,
                 hasLocation = hasLocation,
                 hasMediaAccess = hasMediaAccess,
+                gpsStatus = gpsStatusText(gps, location),
                 versionName = BuildConfig.VERSION_NAME,
                 onPickNavigation = { pkg -> lifecycleScope.launch { graph.settings.setNavigationPackage(pkg) } },
                 onDownloadMap = { graph.scope.launch { graph.mapStore.download() } },

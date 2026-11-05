@@ -29,3 +29,17 @@ fun waitingText(d: GpsDiagnostics): String = when {
         "Waiting for GPS… ${d.satellitesUsed} of ${d.satellitesInView} satellites"
     else -> "Waiting for GPS…"
 }
+
+/** Multi-line GPS report for the settings screen, so the unit's behaviour can be read off it. */
+fun gpsStatusText(d: GpsDiagnostics, state: LocationState): String = buildList {
+    add(
+        when (state) {
+            LocationState.NoPermission -> "Location permission not granted"
+            is LocationState.Waiting -> "No position yet"
+            is LocationState.Live -> "Position from ${state.fix.provider}"
+        },
+    )
+    d.providers?.let { add("Sources: " + it.ifEmpty { listOf("none") }.joinToString(", ")) }
+    if (d.satellitesInView != null) add("Satellites: ${d.satellitesUsed ?: 0} used of ${d.satellitesInView} in view")
+    d.errors.forEach { add("Problem: $it") }
+}.joinToString("\n")

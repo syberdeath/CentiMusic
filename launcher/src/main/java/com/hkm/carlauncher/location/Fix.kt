@@ -10,3 +10,9 @@ data class Fix(
     /** Which location source produced it: "gps", "fused", "network" or "passive". */
     val provider: String = "gps",
 )
+
+sealed interface LocationState {
+    data object NoPermission : LocationState
+    data class Waiting(val lastKnown: Fix?) : LocationState
+    data class Live(val fix: Fix) : LocationState
+}

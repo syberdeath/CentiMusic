@@ -66,6 +66,7 @@ fun MapPanel(
     source: MapSource,
     location: LocationState,
     showHint: Boolean,
+    waitingText: String,
     onTap: () -> Unit,
     onAllowLocation: () -> Unit,
     onGetMap: () -> Unit,
@@ -202,7 +203,7 @@ fun MapPanel(
         val banner: Pair<String, (() -> Unit)?>? = when {
             source == MapSource.Unavailable -> null
             location == LocationState.NoPermission -> "Allow location to show where you are" to onAllowLocation
-            location is LocationState.Waiting -> "Waiting for GPS…" to null
+            location is LocationState.Waiting -> waitingText to null
             showHint -> "Tap map to open navigation" to null
             else -> null
         }
