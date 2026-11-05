@@ -30,6 +30,8 @@ import com.hkm.carlauncher.apps.DockEntry
 import com.hkm.carlauncher.apps.InstalledApp
 import com.hkm.carlauncher.home.HomeCallbacks
 import com.hkm.carlauncher.home.HomeScreen
+import com.hkm.carlauncher.home.Screen
+import com.hkm.carlauncher.home.ScreenHost
 import com.hkm.carlauncher.map.MapPanel
 import com.hkm.carlauncher.map.MapRelease
 import com.hkm.carlauncher.settings.SettingsScreen
@@ -38,8 +40,6 @@ import com.hkm.carlauncher.ui.theme.LauncherColors
 import com.hkm.carlauncher.ui.theme.LauncherTheme
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-
-private enum class Screen { HOME, ALL_APPS, SETTINGS }
 
 class MainActivity : ComponentActivity() {
     private val graph get() = (application as LauncherApp).graph
@@ -106,8 +106,9 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        when (screen) {
-            Screen.HOME -> HomeScreen(
+        ScreenHost(
+            screen = screen,
+            home = { HomeScreen(
                 clock = clock,
                 nowPlaying = nowPlaying,
                 dock = DockEntry.entries.map { it to graph.dockResolver.resolve(it, apps) },
@@ -135,14 +136,14 @@ class MainActivity : ComponentActivity() {
                         modifier = modifier,
                     )
                 },
-            )
-            Screen.ALL_APPS -> AllAppsScreen(
+            ) },
+            allApps = { AllAppsScreen(
                 apps = apps,
                 icon = iconFor,
                 onOpen = { app -> if (graph.launcher.launch(app)) screen = Screen.HOME },
                 onClose = { screen = Screen.HOME },
-            )
-            Screen.SETTINGS -> SettingsScreen(
+            ) },
+            settings = { SettingsScreen(
                 apps = apps,
                 navigationPackage = navPackage,
                 mapStatus = mapStatus,
@@ -157,8 +158,8 @@ class MainActivity : ComponentActivity() {
                 onGrantMediaAccess = ::openNotificationAccess,
                 onSetHome = { startSafely(Intent(Settings.ACTION_HOME_SETTINGS)) },
                 onClose = { screen = Screen.HOME },
-            )
-        }
+            ) },
+        )
 
         MapDownloadOffer(online)
     }

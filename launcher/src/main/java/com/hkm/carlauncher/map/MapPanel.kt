@@ -1,8 +1,7 @@
 package com.hkm.carlauncher.map
 
-import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
-import android.content.pm.PackageManager
 import android.graphics.RectF
 import android.location.Location
 import android.location.LocationManager
@@ -39,7 +38,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.hkm.carlauncher.location.Fix
@@ -120,6 +118,9 @@ fun MapPanel(
         lifecycle.addObserver(observer)
         onDispose {
             lifecycle.removeObserver(observer)
+            val state = lifecycle.currentState
+            if (state.isAtLeast(Lifecycle.State.RESUMED)) mapView.onPause()
+            if (state.isAtLeast(Lifecycle.State.STARTED)) mapView.onStop()
             mapView.onDestroy()
         }
     }
@@ -174,9 +175,8 @@ fun MapPanel(
     }
 
     Box(modifier.clip(CardShape).border(1.dp, LauncherColors.Outline, CardShape).background(Color(0xFF0D1117))) {
-        if (source != MapSource.Unavailable) {
-            AndroidView(factory = { mapView }, modifier = Modifier.fillMaxSize())
-        }
+        // Always composed: re-adding a MapView that is still attached to an old holder would crash.
+        AndroidView(factory = { mapView }, modifier = Modifier.fillMaxSize())
 
         streetName?.let { Chip(it, Modifier.align(Alignment.TopStart).padding(16.dp), bold = true) }
         when (source) {
@@ -215,7 +215,8 @@ fun MapPanel(
 
         if (source == MapSource.Unavailable) {
             Column(
-                Modifier.align(Alignment.Center).padding(40.dp),
+                Modifier.fillMaxSize().background(Color(0xFF0D1117)).padding(40.dp),
+                verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
@@ -230,13 +231,12 @@ fun MapPanel(
     }
 }
 
-private fun hasLocationPermission(context: Context) =
-    ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-
-/** The car marker: MapLibre's location puck in the accent colour, fed with our own GPS fixes. */
-@Suppress("MissingPermission")
+/**
+ * The car marker: MapLibre's location puck in the accent colour. It is fed with our own GPS fixes
+ * (no MapLibre location engine), so it works as soon as permission arrives, without a style reload.
+ */
+@SuppressLint("MissingPermission")
 private fun enableLocationComponent(context: Context, map: MapLibreMap, style: Style) {
-    if (!hasLocationPermission(context)) return
     val options = LocationComponentOptions.builder(context)
         .foregroundTintColor(0xFF4F86F7.toInt())
         .bearingTintColor(0xFF4F86F7.toInt())
