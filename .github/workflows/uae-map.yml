@@ -1,0 +1,48 @@
+name: UAE offline map
+
+# Builds the HKM Launcher's offline map of the UAE from OpenStreetMap and publishes it as the
+# release "uae-map" (uae.pmtiles + uae.pmtiles.sha256). Run it by hand to refresh the map.
+on:
+  workflow_dispatch:
+  # Manual runs need this file on the default branch; until then, a change to it builds the map.
+  push:
+    paths: [.github/workflows/uae-map.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  build-map:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Download Planetiler
+        run: curl -fsSL --retry 3 -o planetiler.jar https://github.com/onthegomap/planetiler/releases/latest/download/planetiler.jar
+
+      # gcc-states is the smallest Geofabrik extract that contains the UAE; --bounds clips it to the UAE.
+      - name: Build uae.pmtiles
+        run: |
+          java -Xmx6g -jar planetiler.jar \
+            --download --area=gcc-states \
+            --bounds=51.4,22.5,56.5,26.3 \
+            --maxzoom=14 \
+            --output=uae.pmtiles
+          sha256sum uae.pmtiles | cut -d' ' -f1 > uae.pmtiles.sha256
+          echo "Size: $(du -h uae.pmtiles | cut -f1) ($(stat -c%s uae.pmtiles) bytes)"
+          echo "SHA-256: $(cat uae.pmtiles.sha256)"
+
+      - name: Publish release uae-map
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release view uae-map >/dev/null 2>&1 || gh release create uae-map \
+            --title "UAE offline map" \
+            --notes "Offline map of the UAE for HKM Launcher. Built from OpenStreetMap data (© OpenStreetMap contributors, ODbL) with Planetiler." \
+            --target "${{ github.sha }}"
+          gh release upload uae-map uae.pmtiles uae.pmtiles.sha256 --clobber
