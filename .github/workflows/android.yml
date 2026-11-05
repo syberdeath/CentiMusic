@@ -38,7 +38,8 @@ jobs:
           echo "present=true" >> "$GITHUB_OUTPUT"
 
       - name: Build debug APK and run unit tests
-        run: ./gradlew --no-daemon --stacktrace assembleDebug testDebugUnitTest
+        run: ./gradlew --no-daemon --stacktrace assembleDebug testDebugUnitTest 2>&1 | tee build.log; exit ${PIPESTATUS[0]}
+        shell: bash
 
       - name: Android lint
         run: ./gradlew --no-daemon lintDebug
@@ -86,3 +87,10 @@ jobs:
             launcher/build/reports/
             launcher/build/test-results/
           if-no-files-found: ignore
+
+      # Last step, so the job log ends with just the compiler errors and failed tests.
+      - name: Failure summary
+        if: failure()
+        run: |
+          echo "=== FAILURE SUMMARY ==="
+          grep -E '^e: |FAILED|tests completed|What went wrong' -A1 build.log | grep -v '^--$' | head -60 || true
