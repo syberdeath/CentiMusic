@@ -1,6 +1,7 @@
 package com.hkm.carlauncher.apps
 
-import androidx.compose.ui.graphics.ImageBitmap
+import android.graphics.Bitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -20,6 +21,8 @@ class AllAppsScreenTest {
     private val carmate = InstalledApp("com.vendor.carmate", "Main", "Carmate", true)
     private val music = InstalledApp("com.vendor.music", "Main", "Music", true)
 
+    private val icon = Bitmap.createBitmap(8, 8, Bitmap.Config.ARGB_8888).asImageBitmap()
+
     @Test
     fun showsLabelsAndOpens() {
         var opened: InstalledApp? = null
@@ -27,7 +30,7 @@ class AllAppsScreenTest {
         rule.setContent {
             AllAppsScreen(
                 apps = listOf(carmate, music),
-                icon = { ImageBitmap(8, 8) },
+                icon = { icon },
                 onOpen = { opened = it },
                 onClose = { closed++ },
             )

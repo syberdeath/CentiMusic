@@ -92,3 +92,11 @@ dependencies {
     testImplementation(libs.compose.ui.test.junit4)
     testImplementation(libs.org.json)
 }
+
+// Full stack traces for failing tests, so CI's failure summary shows the cause.
+tasks.withType<Test>().configureEach {
+    testLogging {
+        events("failed")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    }
+}
