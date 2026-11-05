@@ -34,7 +34,12 @@ It's a separate app from CentiMusic and only lives in this repository.
 
 The map file is built from OpenStreetMap by the **UAE offline map** workflow and published as the
 release [`uae-map`](https://github.com/syberdeath/CentiMusic/releases/tag/uae-map)
-(`uae.pmtiles` plus its SHA-256 checksum).
+(`uae.pmtiles`, about 77 MB, plus its SHA-256 checksum).
+
+> **Known limitation:** the ocean outlines come from osmdata.openstreetmap.de, which GitHub's build
+> machines currently can't reach, so the current offline map draws the sea in the land colour.
+> Roads, labels and places are unaffected, and the online map shows the sea normally. Re-running the
+> workflow when that server is reachable fixes it automatically.
 
 - **Download:** launcher settings → *Offline map* → *Download* (or *Update* for a newer map).
 - **From USB:** download `uae.pmtiles` from the release on a computer, copy it to a USB stick, then

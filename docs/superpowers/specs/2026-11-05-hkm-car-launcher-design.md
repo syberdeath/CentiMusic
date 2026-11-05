@@ -105,8 +105,7 @@ itself. Tap launches; Back or Home returns to the main screen.
 - **Online tiles:** OpenFreeMap vector tiles (OpenMapTiles schema, free, no API key).
 - **Offline tiles:** a UAE vector tile file in the same OpenMapTiles schema, so one dark style serves both.
   - Built by us with Planetiler from the OpenStreetMap UAE extract, in a GitHub Actions workflow, and
-    published as a GitHub Release asset of this repository. Expected size 50–150 MB (measured when
-    first built). Licence: OpenStreetMap ODbL; the map shows "© OpenStreetMap contributors".
+    published as a GitHub Release asset of this repository. First build: 77 MB (2026-11-05). Licence: OpenStreetMap ODbL; the map shows "© OpenStreetMap contributors".
   - Format: PMTiles or MBTiles, whichever the chosen MapLibre version reads from a local file. The first
     implementation task verifies this; fallback is a tiny in-app localhost tile server reading MBTiles.
 - **Style, sprites and fonts** are bundled in the APK's assets so the offline map needs no network at all.
