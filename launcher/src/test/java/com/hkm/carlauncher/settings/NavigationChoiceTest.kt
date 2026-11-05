@@ -24,8 +24,18 @@ class NavigationChoiceTest {
     }
 
     @Test
-    fun carmateWhenNoGoogleMaps() {
-        assertEquals(carmate.packageName, defaultNavigationPackage(listOf(carmate)))
+    fun carmateIsNeverAssumed() {
+        // On these head units "Carmate" is the phone-mirroring app ("No video signal"), not navigation.
+        assertNull(defaultNavigationPackage(listOf(carmate)))
+    }
+
+    @Test
+    fun noGoogleMapsAsksForChoice() = runTest {
+        val opener = FakeOpener(setOf(carmate.packageName))
+        var asked = 0
+        openNavigation(saved = null, apps = listOf(carmate), opener = opener) { asked++ }
+        assertEquals(1, asked)
+        assertEquals(emptyList<String>(), opener.opened)
     }
 
     @Test

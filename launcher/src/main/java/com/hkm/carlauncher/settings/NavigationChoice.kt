@@ -5,10 +5,12 @@ import com.hkm.carlauncher.apps.InstalledApp
 
 const val GOOGLE_MAPS = "com.google.android.apps.maps"
 
-/** Google Maps if installed, else the head unit's Carmate, else nothing. */
+/**
+ * Google Maps if installed, else nothing (the user picks in settings). The head unit's "Carmate"
+ * is not assumed: on these units it is the phone-mirroring app.
+ */
 fun defaultNavigationPackage(apps: List<InstalledApp>): String? =
     apps.firstOrNull { it.packageName == GOOGLE_MAPS }?.packageName
-        ?: apps.firstOrNull { it.label.trim().equals("carmate", ignoreCase = true) }?.packageName
 
 /**
  * Opens the user's navigation app: the saved choice, otherwise the default. If neither can be

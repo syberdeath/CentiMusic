@@ -91,8 +91,8 @@ itself. Tap launches; Back or Home returns to the main screen.
 
 ### 3.3 Launcher settings (long-press the logo)
 
-- **Navigation app:** pick from installed apps. Default: Google Maps if installed, else Carmate, else ask
-  on first tap.
+- **Navigation app:** pick from installed apps. Default: Google Maps if installed, else ask on first
+  tap. (Carmate is not assumed: on this unit it is the phone-mirroring app.)
 - **Offline map:** status (not installed / downloading xx% / installed, size, date), Download, Load from USB
   (file picker), Delete.
 - **Permissions:** status and buttons for Location and Notification access.
