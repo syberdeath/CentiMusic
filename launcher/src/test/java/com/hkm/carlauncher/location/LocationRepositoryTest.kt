@@ -21,7 +21,7 @@ class LocationRepositoryTest {
     private fun grant() = shadowOf(context as android.app.Application)
         .grantPermissions(Manifest.permission.ACCESS_FINE_LOCATION)
 
-    private fun location(bearing: Float?) = Location(LocationManager.GPS_PROVIDER).apply {
+    private fun location(bearing: Float?, provider: String = LocationManager.GPS_PROVIDER) = Location(provider).apply {
         latitude = 25.2; longitude = 55.27; time = 1_000
         if (bearing != null) this.bearing = bearing
     }
@@ -65,5 +65,28 @@ class LocationRepositoryTest {
         shadowOf(manager).simulateLocation(location(null))
         shadowOf(Looper.getMainLooper()).idle()
         assertNull((repo.state.value as LocationState.Live).fix.bearing)
+    }
+
+    @Test
+    fun networkFixUsedWhenGpsHasNone() {
+        grant()
+        shadowOf(manager).setProviderEnabled(LocationManager.GPS_PROVIDER, true)
+        shadowOf(manager).setProviderEnabled(LocationManager.NETWORK_PROVIDER, true)
+        val repo = LocationRepository(context)
+        repo.start()
+        shadowOf(manager).simulateLocation(location(null, LocationManager.NETWORK_PROVIDER))
+        shadowOf(Looper.getMainLooper()).idle()
+        assertEquals("network", (repo.state.value as LocationState.Live).fix.provider)
+    }
+
+    @Test
+    fun diagnosticsListEnabledProviders() {
+        grant()
+        shadowOf(manager).setProviderEnabled(LocationManager.GPS_PROVIDER, true)
+        shadowOf(manager).setProviderEnabled(LocationManager.NETWORK_PROVIDER, true)
+        val repo = LocationRepository(context)
+        repo.start()
+        val providers = repo.diagnostics.value.providers.orEmpty()
+        assertEquals(true, "gps" in providers && "network" in providers)
     }
 }
