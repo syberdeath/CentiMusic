@@ -59,8 +59,33 @@ class FixPolicyTest {
         val d = GpsDiagnostics(listOf("gps", "network"), satellitesUsed = 0, satellitesInView = 4, errors = listOf("gps: IllegalArgumentException"))
         assertEquals(
             "No position yet\nSources: gps, network\nSatellites: 0 used of 4 in view\nProblem: gps: IllegalArgumentException",
-            gpsStatusText(d, LocationState.Waiting(null)),
+            gpsStatusText(d, LocationState.Waiting(null), nowMs = 0),
         )
-        assertEquals("Position from network", gpsStatusText(GpsDiagnostics(), LocationState.Live(fix("network", 0))))
+        assertEquals("Position from network", gpsStatusText(GpsDiagnostics(), LocationState.Live(fix("network", 0)), nowMs = 0))
+    }
+
+    @Test
+    fun statusShowsUpdatesAndLastFixAge() {
+        val last = Fix(25.204812, 55.270781, null, null, timeMs = 100_000, provider = "network")
+        val d = GpsDiagnostics(updates = mapOf("gps" to 0, "network" to 12), lastFix = last, lastFixAtMs = 100_000)
+        val text = gpsStatusText(d, LocationState.Live(last), nowMs = 104_000)
+        assertTrue(text, text.contains("Updates: gps 0, network 12"))
+        assertTrue(text, text.contains("Last position: 25.20481, 55.27078 from network, 4 s ago"))
+    }
+
+    @Test
+    fun statusFlagsWrongGpsClock() {
+        // Cheap GNSS chips with the week-rollover bug report times ~19.6 years in the past.
+        val last = Fix(25.2, 55.27, null, null, timeMs = 1_000_000_000_000, provider = "gps")
+        val d = GpsDiagnostics(lastFix = last, lastFixAtMs = 1_762_000_000_000)
+        val text = gpsStatusText(d, LocationState.Live(last), nowMs = 1_762_000_000_000)
+        assertTrue(text, text.contains("GPS clock is wrong"))
+    }
+
+    @Test
+    fun statusQuietWhenClockMatches() {
+        val last = Fix(25.2, 55.27, null, null, timeMs = 1_762_000_000_000, provider = "gps")
+        val d = GpsDiagnostics(lastFix = last, lastFixAtMs = 1_762_000_000_500)
+        assertFalse(gpsStatusText(d, LocationState.Live(last), nowMs = 1_762_000_001_000).contains("clock"))
     }
 }

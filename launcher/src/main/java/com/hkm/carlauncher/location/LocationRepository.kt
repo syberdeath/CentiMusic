@@ -37,7 +37,15 @@ class LocationRepository(private val context: Context) {
 
     private val listener = LocationListenerCompat { location ->
         val fix = location.toFix()
-        if (shouldUse(current, fix, System.currentTimeMillis())) {
+        val now = System.currentTimeMillis()
+        _diagnostics.value = _diagnostics.value.let { d ->
+            d.copy(
+                updates = d.updates + (fix.provider to (d.updates[fix.provider] ?: 0) + 1),
+                lastFix = fix,
+                lastFixAtMs = now,
+            )
+        }
+        if (shouldUse(current, fix, now)) {
             current = fix
             _state.value = LocationState.Live(fix)
         }
@@ -84,7 +92,11 @@ class LocationRepository(private val context: Context) {
 
         if (providers.isEmpty()) errors += "the unit reports no location sources"
         if (!LocationManagerCompat.isLocationEnabled(manager)) errors += "location is switched off in Android settings"
-        _diagnostics.value = _diagnostics.value.copy(providers = providers, errors = errors)
+        _diagnostics.value = _diagnostics.value.copy(
+            providers = providers,
+            errors = errors,
+            updates = providers.associateWith { _diagnostics.value.updates[it] ?: 0 },
+        )
     }
 
     fun stop() {

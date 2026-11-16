@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
@@ -40,6 +41,7 @@ import com.hkm.carlauncher.settings.SettingsScreen
 import com.hkm.carlauncher.settings.openNavigation
 import com.hkm.carlauncher.ui.theme.LauncherColors
 import com.hkm.carlauncher.ui.theme.LauncherTheme
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -97,6 +99,12 @@ class MainActivity : ComponentActivity() {
         val nowPlaying by graph.nowPlaying.state.collectAsStateWithLifecycle()
         val location by graph.location.state.collectAsStateWithLifecycle()
         val gps by graph.location.diagnostics.collectAsStateWithLifecycle()
+        val now by produceState(System.currentTimeMillis()) {
+            while (true) {
+                delay(1_000)
+                value = System.currentTimeMillis()
+            }
+        }
         val mapSource by graph.mapSource.collectAsStateWithLifecycle()
         val mapStatus by graph.mapStore.status.collectAsStateWithLifecycle()
         val online by graph.online.collectAsStateWithLifecycle()
@@ -153,7 +161,7 @@ class MainActivity : ComponentActivity() {
                 mapStatus = mapStatus,
                 hasLocation = hasLocation,
                 hasMediaAccess = hasMediaAccess,
-                gpsStatus = gpsStatusText(gps, location),
+                gpsStatus = gpsStatusText(gps, location, now),
                 versionName = BuildConfig.VERSION_NAME,
                 onPickNavigation = { pkg -> lifecycleScope.launch { graph.settings.setNavigationPackage(pkg) } },
                 onDownloadMap = { graph.scope.launch { graph.mapStore.download() } },
