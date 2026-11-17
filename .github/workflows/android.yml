@@ -38,8 +38,12 @@ jobs:
           echo "present=true" >> "$GITHUB_OUTPUT"
 
       # Release build: R8-optimized and not debuggable, which makes Compose much faster on the phone.
-      - name: Build release APK and run unit tests
-        run: ./gradlew --no-daemon --stacktrace assembleRelease testDebugUnitTest
+      - name: Build release APK
+        run: ./gradlew --no-daemon --stacktrace assembleRelease
+
+      # Separate run: debug and release Room processing in parallel race on the shared schema file.
+      - name: Run unit tests
+        run: ./gradlew --no-daemon --stacktrace testDebugUnitTest
 
       - name: Android lint
         run: ./gradlew --no-daemon lintDebug
