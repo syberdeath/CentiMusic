@@ -193,8 +193,12 @@ class MusicRepository(
         try {
             val minDuration = if (preferences.current().ignoreShortTracks) 30_000L else 1L
             val songs = withContext(Dispatchers.IO) { scanner.scan(minDuration) }
-            mediaStoreSongs.value = songs
-            ArtworkLoader.clear()
+            // Only drop cached artwork when the library actually changed; MediaStore reports
+            // changes often (other apps, downloads), and reloading every cover causes visible jank.
+            if (songs != mediaStoreSongs.value) {
+                mediaStoreSongs.value = songs
+                ArtworkLoader.clear()
+            }
             _scanState.value = ScanState.Done
         } catch (e: SecurityException) {
             _scanState.value = ScanState.PermissionDenied

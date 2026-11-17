@@ -37,8 +37,9 @@ jobs:
           echo "CENTIMUSIC_KEY_PASSWORD=$KEY_PASSWORD" >> "$GITHUB_ENV"
           echo "present=true" >> "$GITHUB_OUTPUT"
 
-      - name: Build debug APK and run unit tests
-        run: ./gradlew --no-daemon --stacktrace assembleDebug testDebugUnitTest
+      # Release build: R8-optimized and not debuggable, which makes Compose much faster on the phone.
+      - name: Build release APK and run unit tests
+        run: ./gradlew --no-daemon --stacktrace assembleRelease testDebugUnitTest
 
       - name: Android lint
         run: ./gradlew --no-daemon lintDebug
@@ -47,7 +48,7 @@ jobs:
       # Uploaded as a plain .apk (not zipped) so it can be installed straight from the download.
       - name: Upload APK
         if: steps.signing.outputs.present == 'true'
-        run: cp app/build/outputs/apk/debug/app-debug.apk CentiMusic.apk
+        run: cp app/build/outputs/apk/release/app-release.apk CentiMusic.apk
 
       - name: Upload APK artifact
         if: steps.signing.outputs.present == 'true'
