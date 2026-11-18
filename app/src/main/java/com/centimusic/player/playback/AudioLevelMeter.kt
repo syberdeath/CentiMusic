@@ -46,7 +46,7 @@ object AudioLevelMeter {
     private var accFrames = 0
     private var accStartUs = 0L
 
-    /** Measuring costs a little CPU, so it only runs while a visualizer is on screen. */
+    /** Measuring costs a little CPU, so it only runs while the artwork pulse is on screen. */
     val isActive: Boolean get() = consumers.get() > 0
 
     fun acquire() {

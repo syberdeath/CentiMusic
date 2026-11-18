@@ -145,7 +145,6 @@ fun NowPlayingScreen() {
                 }
             }
             NmIconButton(NmIcons.Pulse, "Pulse style", { showPulsePicker = true })
-            NmIconButton(NmIcons.Waveform, "Open visualizer", navigator::visualizer)
             NmIconButton(NmIcons.MoreVertical, "More options", { menu.open(song) })
         }
 

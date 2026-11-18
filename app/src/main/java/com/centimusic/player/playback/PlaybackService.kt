@@ -56,7 +56,7 @@ class PlaybackService : MediaSessionService() {
 
     override fun onCreate() {
         super.onCreate()
-        // MeteringRenderersFactory feeds the in-app visualizer from decoded audio (no extra permissions).
+        // MeteringRenderersFactory feeds the artwork pulse from decoded audio (no extra permissions).
         player = ExoPlayer.Builder(this, MeteringRenderersFactory(this))
             .setAudioAttributes(
                 AudioAttributes.Builder()

@@ -98,7 +98,6 @@ import com.centimusic.player.ui.splash.SplashConfig
 import com.centimusic.player.ui.splash.SplashStyle
 import com.centimusic.player.data.preferences.SplashChoice
 import kotlinx.coroutines.flow.first
-import com.centimusic.player.ui.visualizer.VisualizerScreen
 import com.centimusic.player.ui.theme.NmTheme
 import com.centimusic.player.ui.theme.CentiMusicTheme
 import com.centimusic.player.ui.theme.Spacing
@@ -276,11 +275,6 @@ private fun AppScaffold(
                     enterTransition = { slideInVertically(tween(300)) { it / 3 } + fadeIn(tween(200)) },
                     popExitTransition = { slideOutVertically(tween(260)) { it / 3 } + fadeOut(tween(200)) },
                 ) { QueueScreen() }
-                dest(
-                    Routes.VISUALIZER,
-                    enterTransition = { fadeIn(tween(350)) },
-                    popExitTransition = { fadeOut(tween(250)) },
-                ) { VisualizerScreen() }
             }
         }
 

@@ -124,9 +124,6 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     fun setHideDuplicates(v: Boolean) {
         viewModelScope.launch { prefs.setHideDuplicates(v) }
     }
-    fun setVisualizerLock(v: Boolean) {
-        viewModelScope.launch { prefs.setVisualizerOnLockScreen(v) }
-    }
     fun setIgnoreShort(v: Boolean) {
         viewModelScope.launch { prefs.setIgnoreShortTracks(v) }
     }
@@ -247,14 +244,6 @@ fun SettingsScreen() {
                 )
                 SettingsDivider()
                 ToggleRow(NmIcons.Waveform, "Skip silence", "Trim silent passages during playback", prefs.skipSilence, vm::setSkipSilence)
-                SettingsDivider()
-                ToggleRow(
-                    NmIcons.Shield,
-                    "Visualizer on lock screen",
-                    "If the visualizer is open when your phone locks, show it over the lock screen. Unlock to leave it.",
-                    prefs.visualizerOnLockScreen,
-                    vm::setVisualizerLock,
-                )
             }
         }
         item {

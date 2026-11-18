@@ -30,8 +30,6 @@ data class UserPreferences(
     /** Fade between songs, in seconds; 0 = off (gapless). */
     val fadeSeconds: Int = 0,
     val ignoreShortTracks: Boolean = true,
-    /** Let the visualizer stay over the keyguard while it is open (showWhenLocked). */
-    val visualizerOnLockScreen: Boolean = false,
     /** Collapse the same song stored more than once into a single entry. */
     val hideDuplicates: Boolean = true,
     val pulseStyle: PulseStyle = PulseStyle.HALO,
@@ -65,7 +63,6 @@ class PreferencesRepository(private val context: Context) {
         val skipSilence = booleanPreferencesKey("skip_silence")
         val fadeSeconds = intPreferencesKey("fade_seconds")
         val ignoreShort = booleanPreferencesKey("ignore_short_tracks")
-        val visualizerLock = booleanPreferencesKey("visualizer_on_lock_screen")
         val hideDuplicates = booleanPreferencesKey("hide_duplicates")
         val pulseStyle = stringPreferencesKey("pulse_style")
         val hiddenFolders = stringSetPreferencesKey("hidden_folders")
@@ -90,7 +87,6 @@ class PreferencesRepository(private val context: Context) {
             skipSilence = p[Keys.skipSilence] ?: false,
             fadeSeconds = p[Keys.fadeSeconds] ?: 0,
             ignoreShortTracks = p[Keys.ignoreShort] ?: true,
-            visualizerOnLockScreen = p[Keys.visualizerLock] ?: false,
             hideDuplicates = p[Keys.hideDuplicates] ?: true,
             pulseStyle = p[Keys.pulseStyle]?.let { runCatching { PulseStyle.valueOf(it) }.getOrNull() } ?: PulseStyle.HALO,
             hiddenFolders = p[Keys.hiddenFolders] ?: emptySet(),
@@ -112,7 +108,6 @@ class PreferencesRepository(private val context: Context) {
     suspend fun setSkipSilence(value: Boolean) = context.dataStore.edit { it[Keys.skipSilence] = value }
     suspend fun setFadeSeconds(value: Int) = context.dataStore.edit { it[Keys.fadeSeconds] = value }
     suspend fun setIgnoreShortTracks(value: Boolean) = context.dataStore.edit { it[Keys.ignoreShort] = value }
-    suspend fun setVisualizerOnLockScreen(value: Boolean) = context.dataStore.edit { it[Keys.visualizerLock] = value }
     suspend fun setHideDuplicates(value: Boolean) = context.dataStore.edit { it[Keys.hideDuplicates] = value }
     suspend fun setPulseStyle(style: PulseStyle) = context.dataStore.edit { it[Keys.pulseStyle] = style.name }
     suspend fun setSplashChoice(value: SplashChoice) = context.dataStore.edit { it[Keys.splashChoice] = value.name }
