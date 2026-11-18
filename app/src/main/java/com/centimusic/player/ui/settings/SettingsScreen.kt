@@ -501,6 +501,12 @@ private fun AboutDialog(onDismiss: () -> Unit) {
                 )
                 Spacer(Modifier.height(Spacing.xs))
                 Text("\u2014 LEIGH HUNT", style = NmTheme.type.dotCaption, color = colors.textTertiary, textAlign = TextAlign.Center)
+                Spacer(Modifier.height(Spacing.xl))
+                NmDivider(Modifier.padding(horizontal = Spacing.xl))
+                Spacer(Modifier.height(Spacing.l))
+                Text("DEVELOPED BY", style = NmTheme.type.dotCaption, color = colors.textTertiary, textAlign = TextAlign.Center)
+                Spacer(Modifier.height(Spacing.xs))
+                Text("John Vincent Capitulo", style = NmTheme.type.sectionTitle, color = colors.textPrimary, textAlign = TextAlign.Center)
             }
         },
         confirmButton = {
