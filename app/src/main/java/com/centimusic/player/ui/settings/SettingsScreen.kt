@@ -494,11 +494,13 @@ private fun AboutDialog(onDismiss: () -> Unit) {
                 )
                 Spacer(Modifier.height(Spacing.l))
                 Text(
-                    "He built it because he was sad \uD83D\uDC94",
-                    style = NmTheme.type.body,
-                    color = colors.textSecondary,
+                    "\u201CMusic is the medicine of a broken heart.\u201D \uD83D\uDC94",
+                    style = NmTheme.type.title,
+                    color = colors.textPrimary,
                     textAlign = TextAlign.Center,
                 )
+                Spacer(Modifier.height(Spacing.xs))
+                Text("\u2014 LEIGH HUNT", style = NmTheme.type.dotCaption, color = colors.textTertiary, textAlign = TextAlign.Center)
             }
         },
         confirmButton = {
