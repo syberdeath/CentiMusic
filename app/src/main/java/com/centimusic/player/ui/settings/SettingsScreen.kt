@@ -35,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
@@ -461,16 +462,27 @@ private fun AboutDialog(onDismiss: () -> Unit) {
         text = {
             Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 Spacer(Modifier.height(Spacing.s))
-                Image(
-                    painter = painterResource(R.drawable.about_vincent),
-                    contentDescription = "Vincent, the maker of CentiMusic",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
+                // The CentiMusic mark (same artwork as the launcher icon) on a black disc in a red ring.
+                Box(
+                    Modifier
                         .size(132.dp)
                         .border(2.dp, colors.accent, CircleShape)
                         .padding(5.dp)
-                        .clip(CircleShape),
-                )
+                        .clip(CircleShape)
+                        .background(androidx.compose.ui.graphics.Color.Black),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.ic_launcher_foreground),
+                        contentDescription = "CentiMusic logo",
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer {
+                                scaleX = 1.6f
+                                scaleY = 1.6f
+                            },
+                    )
+                }
                 Spacer(Modifier.height(Spacing.l))
                 Text("CentiMusic", style = NmTheme.type.screenTitle.copy(fontSize = 28.sp), color = colors.textPrimary, textAlign = TextAlign.Center)
                 Spacer(Modifier.height(Spacing.xs))
@@ -482,7 +494,7 @@ private fun AboutDialog(onDismiss: () -> Unit) {
                 )
                 Spacer(Modifier.height(Spacing.l))
                 Text(
-                    "He build it because he is sad \uD83D\uDC94",
+                    "He built it because he was sad \uD83D\uDC94",
                     style = NmTheme.type.body,
                     color = colors.textSecondary,
                     textAlign = TextAlign.Center,
