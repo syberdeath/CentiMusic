@@ -30,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -462,27 +463,12 @@ private fun AboutDialog(onDismiss: () -> Unit) {
         text = {
             Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 Spacer(Modifier.height(Spacing.s))
-                // The CentiMusic mark (same artwork as the launcher icon) on a black disc in a red ring.
                 Box(
                     Modifier
                         .size(132.dp)
                         .border(2.dp, colors.accent, CircleShape)
-                        .padding(5.dp)
-                        .clip(CircleShape)
-                        .background(androidx.compose.ui.graphics.Color.Black),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Image(
-                        painter = painterResource(R.drawable.ic_launcher_foreground),
-                        contentDescription = "CentiMusic logo",
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .graphicsLayer {
-                                scaleX = 1.6f
-                                scaleY = 1.6f
-                            },
-                    )
-                }
+                        .padding(5.dp),
+                ) { DotAvatar(Modifier.fillMaxSize()) }
                 Spacer(Modifier.height(Spacing.l))
                 Text("CentiMusic", style = NmTheme.type.screenTitle.copy(fontSize = 28.sp), color = colors.textPrimary, textAlign = TextAlign.Center)
                 Spacer(Modifier.height(Spacing.xs))
@@ -533,3 +519,48 @@ private fun SettingsCard(content: @Composable androidx.compose.foundation.layout
 
 @Composable
 private fun SettingsDivider() = NmDivider(Modifier.padding(start = 76.dp, end = Spacing.l))
+
+/**
+ * Nothing-style avatar: a round dot-matrix portrait (head and shoulders) on black, with a light
+ * shimmer sweeping across and one red dot, like a Glyph Matrix display.
+ */
+@Composable
+private fun DotAvatar(modifier: Modifier = Modifier) {
+    val accent = NmTheme.colors.accent
+    val phase by androidx.compose.animation.core.rememberInfiniteTransition(label = "avatar").animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = androidx.compose.animation.core.infiniteRepeatable(
+            androidx.compose.animation.core.tween(2_800, easing = androidx.compose.animation.core.LinearEasing),
+        ),
+        label = "shimmer",
+    )
+    androidx.compose.foundation.Canvas(modifier.clip(CircleShape).background(androidx.compose.ui.graphics.Color.Black)) {
+        val grid = 19
+        val step = size.minDimension / grid
+        val c = (grid - 1) / 2f
+        val dot = step * 0.36f
+        for (y in 0 until grid) {
+            for (x in 0 until grid) {
+                val dx = x - c
+                val dy = y - c
+                if (dx * dx + dy * dy > (grid / 2f - 0.3f) * (grid / 2f - 0.3f)) continue
+                // Head: a circle; shoulders: the top of a wide ellipse rising from the bottom edge.
+                val head = (dx * dx) + (dy + 2.6f) * (dy + 2.6f) <= 3.9f * 3.9f
+                val sx = dx / 7.2f
+                val sy = (dy - 8.6f) / 5.4f
+                val shoulders = sx * sx + sy * sy <= 1f
+                val lit = head || shoulders
+                val center = androidx.compose.ui.geometry.Offset(step * (x + 0.5f), step * (y + 0.5f))
+                if (lit) {
+                    val wave = 0.5f + 0.5f * kotlin.math.sin(2f * kotlin.math.PI.toFloat() * (phase - (x + y) / (2f * grid)))
+                    drawCircle(androidx.compose.ui.graphics.Color.White, radius = dot, center = center, alpha = 0.6f + 0.4f * wave)
+                } else {
+                    drawCircle(androidx.compose.ui.graphics.Color.White, radius = dot * 0.6f, center = center, alpha = 0.1f)
+                }
+            }
+        }
+        // The signature red dot, top right.
+        drawCircle(accent, radius = dot * 1.2f, center = androidx.compose.ui.geometry.Offset(step * (grid - 4.5f), step * 3.5f))
+    }
+}
