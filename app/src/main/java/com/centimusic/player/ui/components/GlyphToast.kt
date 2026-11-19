@@ -28,16 +28,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.centimusic.player.ui.theme.NmTheme
 
-/** Nothing-style toast: a compact pill with a blinking red "recording" dot and dot-matrix text. */
+/** Nothing-style toast: a compact pill with a small dot and dot-matrix text. */
 @Composable
 fun GlyphToast(message: String, modifier: Modifier = Modifier) {
     val colors = NmTheme.colors
-    val blink by rememberInfiniteTransition(label = "toast").animateFloat(
-        initialValue = 1f,
-        targetValue = 0.2f,
-        animationSpec = infiniteRepeatable(tween(650, easing = LinearEasing), RepeatMode.Reverse),
-        label = "blink",
-    )
     Box(modifier.fillMaxWidth().padding(bottom = 8.dp), contentAlignment = Alignment.Center) {
         Row(
             Modifier
@@ -50,9 +44,8 @@ fun GlyphToast(message: String, modifier: Modifier = Modifier) {
             Box(
                 Modifier
                     .size(7.dp)
-                    .graphicsLayer { alpha = blink }
                     .clip(CircleShape)
-                    .background(colors.accent),
+                    .background(colors.onInverse.copy(alpha = 0.5f)),
             )
             Spacer(Modifier.width(10.dp))
             Text(

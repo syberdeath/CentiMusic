@@ -55,20 +55,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * Swipeable strip under the Now Playing artwork: the track (title, artist, like), what's up next,
- * and the file's details. Three dots below show which page is open.
+ * Swipeable strip under the Now Playing artwork: the track (title, artist, like) and the file's
+ * details. Two dots below show which page is open.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun NowPlayingPages(
     song: Song,
-    playback: PlaybackState,
     isLiked: Boolean,
     onToggleLike: () -> Unit,
-    onPlayQueueItem: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val pager = rememberPagerState(pageCount = { 3 })
+    val pager = rememberPagerState(pageCount = { 2 })
     Column(modifier) {
         HorizontalPager(
             state = pager,
@@ -78,12 +76,11 @@ fun NowPlayingPages(
         ) { page ->
             when (page) {
                 0 -> TrackPage(song, isLiked, onToggleLike)
-                1 -> UpNextPage(playback, onPlayQueueItem)
                 else -> DetailsPage(song)
             }
         }
         Spacer(Modifier.height(Spacing.s))
-        PageDots(count = 3, current = pager.currentPage, modifier = Modifier.align(Alignment.CenterHorizontally))
+        PageDots(count = 2, current = pager.currentPage, modifier = Modifier.align(Alignment.CenterHorizontally))
     }
 }
 
@@ -106,52 +103,6 @@ private fun TrackPage(song: Song, isLiked: Boolean, onToggleLike: () -> Unit) {
             onToggleLike,
             tint = if (isLiked) colors.accent else colors.textPrimary,
         )
-    }
-}
-
-@Composable
-private fun UpNextPage(playback: PlaybackState, onPlayQueueItem: (Int) -> Unit) {
-    val colors = NmTheme.colors
-    val haptics = rememberHaptics()
-    val next = playback.upNext.take(3)
-    Column(Modifier.fillMaxSize()) {
-        Text("UP NEXT", style = NmTheme.type.dotCaption, color = colors.textTertiary)
-        Spacer(Modifier.height(Spacing.xs))
-        if (next.isEmpty()) {
-            Text("Nothing queued after this song", style = NmTheme.type.bodySmall, color = colors.textSecondary)
-        }
-        next.forEachIndexed { i, entry ->
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .height(24.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .clickable { haptics.tick(); onPlayQueueItem(entry.index) },
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text("${i + 1}", style = NmTheme.type.dotCaption, color = if (i == 0) colors.accent else colors.textTertiary, modifier = Modifier.width(18.dp))
-                Artwork(entry.song, Modifier.size(20.dp), corner = 10.dp, sizeHint = 48.dp)
-                Spacer(Modifier.width(Spacing.s))
-                Text(
-                    entry.song.title,
-                    style = NmTheme.type.bodySmall,
-                    color = colors.textPrimary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false),
-                )
-                Text(
-                    "  ·  ${entry.song.artist}",
-                    style = NmTheme.type.bodySmall,
-                    color = colors.textSecondary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false),
-                )
-                Spacer(Modifier.weight(0.01f))
-                Text(entry.song.durationMs.formatDuration(), style = NmTheme.type.dotCaption, color = colors.textTertiary)
-            }
-        }
     }
 }
 
@@ -217,11 +168,11 @@ private fun Detail(label: String, value: String, highlight: Boolean = false) {
     val colors = NmTheme.colors
     Column {
         Text(label, style = NmTheme.type.caption, color = colors.textTertiary)
-        Text(value, style = NmTheme.type.label, color = if (highlight) colors.accent else colors.textPrimary, maxLines = 1)
+        Text(value, style = NmTheme.type.label, color = colors.textPrimary, maxLines = 1)
     }
 }
 
-/** Nothing-style page indicator: small dots, the open page in red and slightly wider. */
+/** Nothing-style page indicator: small dots, the open page brighter and slightly wider. */
 @Composable
 fun PageDots(count: Int, current: Int, modifier: Modifier = Modifier) {
     val colors = NmTheme.colors
@@ -229,7 +180,7 @@ fun PageDots(count: Int, current: Int, modifier: Modifier = Modifier) {
         repeat(count) { i ->
             val active = i == current
             val width by animateDpAsState(if (active) 14.dp else 5.dp, label = "dotWidth")
-            val color by animateColorAsState(if (active) colors.accent else colors.textTertiary, label = "dotColor")
+            val color by animateColorAsState(if (active) colors.textPrimary else colors.textTertiary, label = "dotColor")
             Box(
                 Modifier
                     .size(width = width, height = 5.dp)

@@ -89,8 +89,6 @@ fun LibraryScreen() {
     LazyColumn(Modifier.fillMaxSize(), contentPadding = bottomContentPadding(LocalChromePadding.current, Spacing.xxl)) {
         item {
             ScreenTitle("Library") {
-                NmIconButton(NmIcons.Import, "Import audio files", access.importFiles)
-                NmIconButton(NmIcons.Search, "Search", { navigator.tab(Routes.SEARCH) })
                 NmIconButton(NmIcons.Settings, "Settings", navigator::settings)
             }
             Spacer(Modifier.height(Spacing.s))
@@ -108,27 +106,21 @@ fun LibraryScreen() {
             }
         }
         item {
-            Kicker("Collection", Modifier.padding(horizontal = Spacing.gutter, vertical = Spacing.s))
-            // Nothing-style widget grid.
+            // The two you open most get big tiles; everything else is a quiet list with counts.
             val accent = NmTheme.colors.accent
-            Column(
-                Modifier.padding(horizontal = Spacing.gutter),
-                verticalArrangement = Arrangement.spacedBy(Spacing.m),
+            Row(
+                Modifier.padding(horizontal = Spacing.gutter, vertical = Spacing.s),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.m),
             ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.m)) {
-                    StatTile(NmIcons.HeartFilled, state.liked.toString(), "Liked songs", navigator::liked, Modifier.weight(1f), iconTint = accent)
-                    StatTile(NmIcons.Note, state.playlists.toString(), "Playlists", navigator::playlists, Modifier.weight(1f))
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.m)) {
-                    StatTile(NmIcons.Disc, state.albums.toString(), "Albums", navigator::albums, Modifier.weight(1f))
-                    StatTile(NmIcons.Person, state.artists.toString(), "Artists", navigator::artists, Modifier.weight(1f))
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.m)) {
-                    StatTile(NmIcons.Waveform, state.songs.toString(), "All songs", navigator::songs, Modifier.weight(1f))
-                    StatTile(NmIcons.Folder, state.folders.toString(), "Folders", navigator::folders, Modifier.weight(1f))
-                }
-                StatTile(NmIcons.Clock, "Recent", "Recently played", navigator::recentlyPlayed, Modifier.fillMaxWidth(), height = 96.dp)
+                StatTile(NmIcons.HeartFilled, state.liked.toString(), "Liked songs", navigator::liked, Modifier.weight(1f), iconTint = accent)
+                StatTile(NmIcons.Note, state.playlists.toString(), "Playlists", navigator::playlists, Modifier.weight(1f))
             }
+            Spacer(Modifier.height(Spacing.s))
+            NavigationRow(NmIcons.Waveform, "Songs", navigator::songs, value = state.songs.toString(), iconSize = 40.dp)
+            NavigationRow(NmIcons.Disc, "Albums", navigator::albums, value = state.albums.toString(), iconSize = 40.dp)
+            NavigationRow(NmIcons.Person, "Artists", navigator::artists, value = state.artists.toString(), iconSize = 40.dp)
+            NavigationRow(NmIcons.Folder, "Folders", navigator::folders, value = state.folders.toString(), iconSize = 40.dp)
+            NavigationRow(NmIcons.Clock, "Recently played", navigator::recentlyPlayed, iconSize = 40.dp)
         }
 
         if (state.recentAlbums.isNotEmpty()) {

@@ -190,98 +190,68 @@ fun SettingsScreen() {
             SettingsCard {
                 NavigationRow(NmIcons.Appearance, "Theme", { dialog = SettingsDialog.Theme }, value = prefs.themeMode.label, iconSize = 40.dp)
                 SettingsDivider()
-                NavigationRow(
-                    NmIcons.Waveform,
-                    "Pulse style",
-                    { dialog = SettingsDialog.Pulse },
-                    subtitle = "Tip: double-tap the artwork in Now Playing to switch",
-                    value = prefs.pulseStyle.label,
-                    iconSize = 40.dp,
-                )
+                NavigationRow(NmIcons.Waveform, "Pulse style", { dialog = SettingsDialog.Pulse }, value = prefs.pulseStyle.label, iconSize = 40.dp)
                 SettingsDivider()
-                NavigationRow(
-                    NmIcons.Disc,
-                    "Splash animation",
-                    { dialog = SettingsDialog.Splash },
-                    subtitle = "Plays in full on the first launch of the day",
-                    value = prefs.splashChoice.label,
-                    iconSize = 40.dp,
-                )
+                NavigationRow(NmIcons.Disc, "Splash animation", { dialog = SettingsDialog.Splash }, value = prefs.splashChoice.label, iconSize = 40.dp)
                 SettingsDivider()
-                NavigationRow(
-                    NmIcons.Person,
-                    "Greeting name",
-                    { dialog = SettingsDialog.Greeting },
-                    value = prefs.greetingName.ifBlank { "None" },
-                    iconSize = 40.dp,
-                )
+                ToggleRow(NmIcons.Clock, "Always play full splash", null, prefs.alwaysFullSplash, vm::setAlwaysFullSplash)
                 SettingsDivider()
-                ToggleRow(
-                    NmIcons.Clock,
-                    "Always play full splash",
-                    "Off: the full animation plays on the first launch of the day, a quick one after",
-                    prefs.alwaysFullSplash,
-                    vm::setAlwaysFullSplash,
-                )
-                SettingsDivider()
-                NavigationRow(NmIcons.Play, "Preview splash", replaySplash, iconSize = 40.dp, showChevron = false)
+                NavigationRow(NmIcons.Person, "Greeting name", { dialog = SettingsDialog.Greeting }, value = prefs.greetingName.ifBlank { "None" }, iconSize = 40.dp)
             }
         }
         item {
             GroupLabel("Playback")
             SettingsCard {
-                ToggleRow(NmIcons.Shuffle, "Remember shuffle & repeat", "Keep your shuffle and repeat choice between sessions", prefs.rememberPlaybackModes, vm::setRememberModes)
+                ToggleRow(NmIcons.Shuffle, "Remember shuffle & repeat", null, prefs.rememberPlaybackModes, vm::setRememberModes)
                 SettingsDivider()
-                ToggleRow(NmIcons.Clock, "Resume where you left off", "Restore the last queue and position when you return", prefs.resumeLastQueue, vm::setResume)
+                ToggleRow(NmIcons.Clock, "Resume where you left off", null, prefs.resumeLastQueue, vm::setResume)
                 SettingsDivider()
-                ToggleRow(NmIcons.Headphones, "Pause when audio disconnects", "Pause if headphones are unplugged or Bluetooth drops", prefs.pauseOnDisconnect, vm::setPauseOnDisconnect)
+                ToggleRow(NmIcons.Headphones, "Pause when audio disconnects", null, prefs.pauseOnDisconnect, vm::setPauseOnDisconnect)
                 SettingsDivider()
                 NavigationRow(
                     NmIcons.Waveform,
                     "Fade between songs",
                     { dialog = SettingsDialog.Fade },
-                    subtitle = "Fade out the end of a song and fade in the next",
                     value = if (prefs.fadeSeconds == 0) "Off" else "${prefs.fadeSeconds} s",
                     iconSize = 40.dp,
                 )
                 SettingsDivider()
-                ToggleRow(NmIcons.Waveform, "Skip silence", "Trim silent passages during playback", prefs.skipSilence, vm::setSkipSilence)
+                ToggleRow(NmIcons.Waveform, "Skip silence", null, prefs.skipSilence, vm::setSkipSilence)
             }
         }
         item {
             GroupLabel("Library")
             SettingsCard {
-                ToggleRow(
-                    NmIcons.Note,
-                    "Hide duplicate songs",
-                    "Show one entry when the same song is stored more than once (same title, artist and length)",
-                    prefs.hideDuplicates,
-                    vm::setHideDuplicates,
-                )
+                ToggleRow(NmIcons.Note, "Hide duplicate songs", "Same title, artist and length", prefs.hideDuplicates, vm::setHideDuplicates)
                 SettingsDivider()
                 NavigationRow(
                     NmIcons.Folder,
                     "Hidden folders",
                     navigator::hiddenFolders,
-                    subtitle = "Leave folders like WhatsApp audio out of your library",
                     value = if (prefs.hiddenFolders.isEmpty()) "None" else prefs.hiddenFolders.size.toString(),
                     iconSize = 40.dp,
                 )
                 SettingsDivider()
-                ToggleRow(NmIcons.Note, "Ignore short audio", "Hide files shorter than 30 seconds, like ringtones and voice notes", prefs.ignoreShortTracks, vm::setIgnoreShort)
-                SettingsDivider()
+                ToggleRow(NmIcons.Note, "Ignore short audio", "Under 30 seconds, like ringtones", prefs.ignoreShortTracks, vm::setIgnoreShort)
+                if (!access.granted) {
+                    SettingsDivider()
+                    NavigationRow(NmIcons.Shield, "Allow music access", access.request, subtitle = "Required to scan music on this device", iconSize = 40.dp)
+                }
+            }
+        }
+        item {
+            GroupLabel("Actions")
+            SettingsCard {
                 NavigationRow(NmIcons.Refresh, "Rescan library", {
                     scope.launch {
                         val count = vm.rescan()
                         message("Library updated · $count songs")
                     }
-                }, subtitle = "Look for new or removed music", iconSize = 40.dp, showChevron = false)
+                }, iconSize = 40.dp, showChevron = false)
                 SettingsDivider()
-                NavigationRow(NmIcons.Import, "Import audio files", access.importFiles, subtitle = "Pick files from any folder or provider", iconSize = 40.dp, showChevron = false)
-                if (!access.granted) {
-                    SettingsDivider()
-                    NavigationRow(NmIcons.Shield, "Allow music access", access.request, subtitle = "Required to scan music on this device", iconSize = 40.dp)
-                }
+                NavigationRow(NmIcons.Import, "Import audio files", access.importFiles, iconSize = 40.dp, showChevron = false)
+                SettingsDivider()
+                NavigationRow(NmIcons.Play, "Preview splash", replaySplash, iconSize = 40.dp, showChevron = false)
                 SettingsDivider()
                 NavigationRow(NmIcons.Search, "Clear search history", {
                     vm.clearSearchHistory()
@@ -294,9 +264,7 @@ fun SettingsScreen() {
             SettingsCard {
                 NavigationRow(NmIcons.Shield, "Privacy", { dialog = SettingsDialog.Privacy }, iconSize = 40.dp)
                 SettingsDivider()
-                NavigationRow(NmIcons.Info, "About", { dialog = SettingsDialog.About }, iconSize = 40.dp)
-                SettingsDivider()
-                NavigationRow(NmIcons.Info, "Version", {}, value = BuildConfig.VERSION_NAME, iconSize = 40.dp, showChevron = false)
+                NavigationRow(NmIcons.Info, "About CentiMusic", { dialog = SettingsDialog.About }, value = BuildConfig.VERSION_NAME, iconSize = 40.dp)
             }
         }
         item {
@@ -309,13 +277,6 @@ fun SettingsScreen() {
                 Text("CentiMusic", style = NmTheme.type.brand, color = colors.textSecondary)
                 Spacer(Modifier.height(Spacing.xs))
                 Text("Local music. A clearer mind.", style = NmTheme.type.caption, color = colors.textTertiary)
-                Spacer(Modifier.height(Spacing.m))
-                Box(
-                    Modifier
-                        .size(8.dp)
-                        .clip(CircleShape)
-                        .background(colors.accent),
-                )
             }
         }
     }
@@ -395,7 +356,7 @@ private fun GroupLabel(text: String) {
 }
 
 @Composable
-private fun ToggleRow(icon: ImageVector, title: String, subtitle: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+private fun ToggleRow(icon: ImageVector, title: String, subtitle: String?, checked: Boolean, onChange: (Boolean) -> Unit) {
     val colors = NmTheme.colors
     Row(
         Modifier
@@ -409,7 +370,7 @@ private fun ToggleRow(icon: ImageVector, title: String, subtitle: String, checke
         Spacer(Modifier.width(Spacing.l))
         Column(Modifier.weight(1f)) {
             Text(title, style = NmTheme.type.title, color = colors.textPrimary)
-            Text(subtitle, style = NmTheme.type.caption, color = colors.textSecondary)
+            if (subtitle != null) Text(subtitle, style = NmTheme.type.caption, color = colors.textSecondary)
         }
         Spacer(Modifier.width(Spacing.m))
         DotSwitch(checked)
@@ -466,7 +427,7 @@ private fun AboutDialog(onDismiss: () -> Unit) {
                 Box(
                     Modifier
                         .size(132.dp)
-                        .border(2.dp, colors.accent, CircleShape)
+                        .border(1.5.dp, colors.divider, CircleShape)
                         .padding(5.dp),
                 ) { DotAvatar(Modifier.fillMaxSize()) }
                 Spacer(Modifier.height(Spacing.l))

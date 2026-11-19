@@ -28,8 +28,7 @@ import kotlin.math.sin
 
 /**
  * An icon redrawn as a dot-matrix display: the vector is rasterised onto a small grid, lit cells
- * become dots with a slow shimmer sweeping across, unlit cells stay as a faint matrix, and the
- * top-right dot is red.
+ * become dots and unlit cells stay as a faint matrix.
  */
 @Composable
 fun DotMatrixIcon(
@@ -69,12 +68,6 @@ fun DotMatrixIcon(
             hit
         }
     }
-    val phase by rememberInfiniteTransition(label = "matrix").animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(2_400, easing = LinearEasing)),
-        label = "sweep",
-    )
     Canvas(modifier.size(size)) {
         val step = this.size.width / grid
         val r = step * 0.34f
@@ -83,14 +76,11 @@ fun DotMatrixIcon(
             val cy = cell / grid
             val center = Offset(step * (cx + 0.5f), step * (cy + 0.5f))
             if (lit[cell]) {
-                // Diagonal shimmer: each dot brightens as the sweep passes over it.
-                val wave = 0.5f + 0.5f * sin(2f * PI.toFloat() * (phase - (cx + cy) / (2f * grid)))
-                drawCircle(color, radius = r, center = center, alpha = 0.55f + 0.45f * wave)
+                drawCircle(color, radius = r, center = center, alpha = 0.9f)
             } else {
                 drawCircle(color, radius = r * 0.7f, center = center, alpha = 0.07f)
             }
         }
-        drawCircle(accent, radius = r * 1.25f, center = Offset(step * (grid - 0.5f), step * 0.5f))
     }
 }
 

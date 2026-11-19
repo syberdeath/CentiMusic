@@ -123,7 +123,7 @@ private fun PlaylistRow(playlist: Playlist, onClick: () -> Unit) {
     }
 }
 
-/** First track's artwork, or a placeholder seeded by the playlist id. Red dot marks it as a playlist. */
+/** First track's artwork, or a placeholder seeded by the playlist id. */
 @Composable
 fun PlaylistCover(playlist: Playlist, size: Dp, corner: Dp = Spacing.thumbCorner * (size.value / 48f)) {
     Box(Modifier.size(size)) {
@@ -133,13 +133,5 @@ fun PlaylistCover(playlist: Playlist, size: Dp, corner: Dp = Spacing.thumbCorner
         } else {
             ArtworkPlaceholder(playlist.id.toInt(), Modifier.size(size).clip(RoundedCornerShape(corner)))
         }
-        Box(
-            Modifier
-                .align(Alignment.TopEnd)
-                .padding(size * 0.08f)
-                .size(size * 0.12f)
-                .clip(RoundedCornerShape(50))
-                .background(NmTheme.colors.accent),
-        )
     }
 }

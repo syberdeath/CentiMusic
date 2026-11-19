@@ -121,16 +121,6 @@ fun QueueScreen() {
                     ) {
                         Box {
                             Artwork(current, Modifier.size(56.dp), corner = Spacing.thumbCorner, sizeHint = 64.dp)
-                            if (playback.isPlaying) {
-                                Box(
-                                    Modifier
-                                        .align(Alignment.TopEnd)
-                                        .padding(5.dp)
-                                        .size(7.dp)
-                                        .clip(CircleShape)
-                                        .background(colors.accent),
-                                )
-                            }
                         }
                         Spacer(Modifier.width(Spacing.m))
                         Column(Modifier.weight(1f)) {

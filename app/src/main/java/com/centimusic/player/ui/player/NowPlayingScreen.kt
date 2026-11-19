@@ -98,7 +98,6 @@ fun NowPlayingScreen() {
     val haptics = rememberHaptics()
     val message = LocalMessenger.current
     val prefs by container.preferences.preferences.collectAsStateWithLifecycle(initialValue = UserPreferences())
-    val currentPulseStyle by rememberUpdatedState(prefs.pulseStyle)
     val currentGlyph by rememberUpdatedState(prefs.glyphArtwork)
     var showPulsePicker by remember { mutableStateOf(false) }
     val swipeX = remember { Animatable(0f) }
@@ -134,18 +133,38 @@ fun NowPlayingScreen() {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             NmIconButton(NmIcons.ChevronDown, "Close player", navigator::back)
-            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("NOW PLAYING", style = NmTheme.type.dotCaption, color = colors.textTertiary)
-                if (playback.queue.size > 1 && playback.queuePosition >= 0) {
-                    Text(
-                        "${playback.queuePosition + 1} of ${playback.queue.size}",
-                        style = NmTheme.type.caption,
-                        color = colors.textSecondary,
+            Text(
+                "NOW PLAYING",
+                style = NmTheme.type.dotCaption,
+                color = colors.textTertiary,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                modifier = Modifier.weight(1f),
+            )
+            // One menu for the rare options, so the header stays quiet.
+            Box {
+                var showMore by remember { mutableStateOf(false) }
+                NmIconButton(NmIcons.MoreVertical, "More options", { showMore = true })
+                androidx.compose.material3.DropdownMenu(expanded = showMore, onDismissRequest = { showMore = false }, containerColor = colors.surface) {
+                    androidx.compose.material3.DropdownMenuItem(
+                        text = { Text("Song options", color = colors.textPrimary) },
+                        leadingIcon = { Icon(NmIcons.MoreVertical, null, tint = colors.textPrimary) },
+                        onClick = { showMore = false; menu.open(song) },
+                    )
+                    androidx.compose.material3.DropdownMenuItem(
+                        text = { Text("Pulse style", color = colors.textPrimary) },
+                        leadingIcon = { Icon(NmIcons.Pulse, null, tint = colors.textPrimary) },
+                        onClick = { showMore = false; showPulsePicker = true },
+                    )
+                    androidx.compose.material3.DropdownMenuItem(
+                        text = { Text(if (prefs.glyphArtwork) "Show artwork" else "Show Glyph Matrix", color = colors.textPrimary) },
+                        leadingIcon = { Icon(NmIcons.Waveform, null, tint = colors.textPrimary) },
+                        onClick = {
+                            showMore = false
+                            scope.launch { container.preferences.setGlyphArtwork(!prefs.glyphArtwork) }
+                        },
                     )
                 }
             }
-            NmIconButton(NmIcons.Pulse, "Pulse style", { showPulsePicker = true })
-            NmIconButton(NmIcons.MoreVertical, "More options", { menu.open(song) })
         }
 
         // Artwork takes all the room that's left, as a square.
@@ -154,7 +173,6 @@ fun NowPlayingScreen() {
                 .weight(1f)
                 .fillMaxWidth()
                 .padding(horizontal = Spacing.s, vertical = Spacing.s)
-                // Double-tap the artwork to try the next pulse style.
                 .pointerInput(Unit) {
                     detectTapGestures(
                         // Tap the artwork to switch between the photo and the Glyph Matrix.
@@ -163,12 +181,6 @@ fun NowPlayingScreen() {
                             val glyph = !currentGlyph
                             scope.launch { container.preferences.setGlyphArtwork(glyph) }
                             message(if (glyph) "Glyph Matrix" else "Artwork")
-                        },
-                        onDoubleTap = {
-                            val next = currentPulseStyle.next()
-                            haptics.confirm()
-                            scope.launch { container.preferences.setPulseStyle(next) }
-                            message("Pulse: ${next.label}")
                         },
                     )
                 }
@@ -278,13 +290,11 @@ fun NowPlayingScreen() {
         Column(Modifier.padding(horizontal = 28.dp)) {
             NowPlayingPages(
                 song = song,
-                playback = playback,
                 isLiked = isLiked,
                 onToggleLike = {
                     haptics.confirm()
                     scope.launch { container.favorites.setLiked(song, !isLiked, library) }
                 },
-                onPlayQueueItem = player::playQueueItem,
             )
 
             Spacer(Modifier.height(Spacing.m))

@@ -218,7 +218,6 @@ fun SongListScreen(source: SongListSource) {
             visible = collapsed && !selecting,
             title = album?.title ?: state.title,
             onBack = navigator::back,
-            onPlay = if (state.songs.isNotEmpty()) ({ container.player.play(state.songs, shuffle = false) }) else null,
             actions = sortAction,
             modifier = Modifier.align(Alignment.TopCenter),
         )
@@ -314,7 +313,7 @@ private fun SelectionBar(
             Text(
                 if (allSelected) "None" else "All",
                 style = NmTheme.type.dotCaption,
-                color = colors.accent,
+                color = colors.textPrimary,
                 modifier = Modifier
                     .clip(RoundedCornerShape(4.dp))
                     .clickable(onClick = onSelectAll)
@@ -440,14 +439,6 @@ private fun CollectionHeader(
                     } else {
                         Artwork(state.cover, Modifier.size(120.dp), sizeHint = 256.dp)
                     }
-                    Box(
-                        Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(8.dp)
-                            .size(10.dp)
-                            .clip(CircleShape)
-                            .background(colors.accent),
-                    )
                 }
                 Spacer(Modifier.width(Spacing.l))
                 Column(Modifier.weight(1f)) {
@@ -498,7 +489,7 @@ private fun DuplicateNote(filter: DuplicateFilter, onToggle: () -> Unit) {
             Modifier
                 .size(6.dp)
                 .clip(CircleShape)
-                .background(if (filter.enabled) colors.accent else colors.textTertiary),
+                .background(colors.textTertiary),
         )
         Spacer(Modifier.width(Spacing.s))
         Text(
@@ -510,7 +501,7 @@ private fun DuplicateNote(filter: DuplicateFilter, onToggle: () -> Unit) {
         Text(
             if (filter.enabled) "Show all" else "Hide duplicates",
             style = NmTheme.type.dotCaption,
-            color = colors.accent,
+            color = colors.textPrimary,
             modifier = Modifier
                 .clip(androidx.compose.foundation.shape.RoundedCornerShape(4.dp))
                 .clickable(onClick = onToggle)

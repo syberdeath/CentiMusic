@@ -124,8 +124,7 @@ fun AlbumHeader(
             Box(
                 Modifier
                     .matchParentSize()
-                    .background(Brush.verticalGradient(listOf(colors.background.copy(alpha = 0.35f), colors.background.copy(alpha = 0.8f), colors.background)))
-                    .dotGrid(colors.textPrimary, spacing = 10.dp, alpha = 0.12f),
+                    .background(Brush.verticalGradient(listOf(colors.background.copy(alpha = 0.35f), colors.background.copy(alpha = 0.8f), colors.background))),
             )
         }
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -139,7 +138,7 @@ fun AlbumHeader(
                 sizeHint = 512.dp,
             )
             Spacer(Modifier.height(Spacing.xl))
-            Text("ALBUM", style = NmTheme.type.dotCaption, color = colors.accent)
+            Text("ALBUM", style = NmTheme.type.dotCaption, color = colors.textTertiary)
             Spacer(Modifier.height(Spacing.xs))
             Text(
                 album?.title.orEmpty(),

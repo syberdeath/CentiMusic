@@ -95,7 +95,7 @@ fun BottomNavBar(selectedTab: String?, onSelect: (String) -> Unit, modifier: Mod
                         Modifier
                             .size(5.dp)
                             .clip(CircleShape)
-                            .background(if (selected) colors.accent else Color.Transparent),
+                            .background(if (selected) colors.textPrimary else Color.Transparent),
                     )
                 }
             }

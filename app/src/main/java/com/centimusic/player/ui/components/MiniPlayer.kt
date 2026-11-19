@@ -121,17 +121,6 @@ fun MiniPlayer(
                     )
                 }
                 }
-                if (state.isPlaying) {
-                    Box(
-                        Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(3.dp)
-                            .size(6.dp)
-                            .graphicsLayer { alpha = 0.45f + 0.55f * pulse.level }
-                            .clip(CircleShape)
-                            .background(colors.accent),
-                    )
-                }
             }
             Spacer(Modifier.width(Spacing.m))
             Column(Modifier.weight(1f)) {
@@ -179,10 +168,10 @@ fun MiniPlayer(
             val playedDots = (progress * count).toInt()
             for (i in 0 until count) {
                 drawCircle(
-                    if (i < playedDots) colors.accent else colors.textPrimary,
+                    colors.textPrimary,
                     radius = r,
                     center = Offset(step * (i + 0.5f), size.height / 2),
-                    alpha = if (i < playedDots) 1f else 0.15f,
+                    alpha = if (i < playedDots) 0.9f else 0.15f,
                 )
             }
         }

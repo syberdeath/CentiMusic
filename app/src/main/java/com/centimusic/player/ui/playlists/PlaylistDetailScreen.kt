@@ -233,7 +233,6 @@ private fun PlaylistContent(playlist: Playlist, vm: PlaylistViewModel) {
         visible = collapsed,
         title = playlist.name,
         onBack = navigator::back,
-        onPlay = if (songs.isNotEmpty()) ({ container.player.play(songs, shuffle = false) }) else null,
         modifier = Modifier.align(Alignment.TopCenter),
     )
     }

@@ -113,13 +113,6 @@ fun ArtistScreen(name: String) {
                     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                         Box(contentAlignment = Alignment.TopEnd) {
                             Artwork(artist.cover, Modifier.size(184.dp).clip(CircleShape), corner = 92.dp, sizeHint = 512.dp)
-                            Box(
-                                Modifier
-                                    .padding(top = 14.dp, end = 14.dp)
-                                    .size(14.dp)
-                                    .clip(CircleShape)
-                                    .background(colors.accent),
-                            )
                         }
                         Spacer(Modifier.height(Spacing.l))
                         Text(
@@ -212,7 +205,6 @@ fun ArtistScreen(name: String) {
         visible = collapsed && artist != null,
         title = name,
         onBack = navigator::back,
-        onPlay = artist?.let { a -> { container.player.play(a.songs, shuffle = false) } },
         modifier = Modifier.align(Alignment.TopCenter),
     )
     }

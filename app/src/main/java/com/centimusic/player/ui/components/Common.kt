@@ -148,19 +148,10 @@ fun NmDivider(modifier: Modifier = Modifier, startIndent: Dp = 0.dp) {
     }
 }
 
-/** Small uppercase dot-matrix label with a red dot: "● COLLECTION". */
+/** Small uppercase dot-matrix label: "COLLECTION". */
 @Composable
 fun Kicker(text: String, modifier: Modifier = Modifier) {
-    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
-        Box(
-            Modifier
-                .size(6.dp)
-                .clip(CircleShape)
-                .background(NmTheme.colors.accent),
-        )
-        Spacer(Modifier.width(Spacing.s))
-        Text(text.uppercase(), style = NmTheme.type.dotCaption, color = NmTheme.colors.textSecondary)
-    }
+    Text(text.uppercase(), style = NmTheme.type.dotCaption, color = NmTheme.colors.textSecondary, modifier = modifier)
 }
 
 /** Faint dot lattice drawn behind content, like Nothing OS wallpapers and widgets. */
@@ -237,13 +228,6 @@ fun SectionHeader(
             .padding(horizontal = Spacing.gutter),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            Modifier
-                .size(6.dp)
-                .clip(CircleShape)
-                .background(NmTheme.colors.accent),
-        )
-        Spacer(Modifier.width(Spacing.s))
         if (number != null) {
             Text(
                 number.toString().padStart(2, '0'),
@@ -406,7 +390,7 @@ fun DotLoader(modifier: Modifier = Modifier) {
                 val on = row < lit
                 val top = row == lit - 1 && c == 2
                 drawCircle(
-                    if (top) accent else color,
+                    color,
                     radius = r,
                     center = androidx.compose.ui.geometry.Offset(sx * (c + 0.5f), size.height - sy * (row + 0.5f)),
                     alpha = if (on) 0.95f else 0.12f,

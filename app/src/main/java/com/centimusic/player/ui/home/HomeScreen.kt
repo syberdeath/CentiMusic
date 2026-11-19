@@ -156,53 +156,23 @@ fun HomeScreen() {
                         Spacer(Modifier.height(Spacing.xxl))
                     }
                 }
-                // Shelves are numbered in order, like a spec sheet: 01 Recently Played, 02 Most Played…
-                val shelves = listOfNotNull(
-                    "played".takeIf { state.recentlyPlayed.isNotEmpty() },
-                    "most".takeIf { state.mostPlayed.isNotEmpty() },
-                    "liked".takeIf { state.liked.isNotEmpty() },
-                    "added",
-                    "albums".takeIf { state.albums.size > 1 },
-                )
-                fun number(key: String) = shelves.indexOf(key) + 1
                 if (state.recentlyPlayed.isNotEmpty()) {
                     item(key = "played") {
-                        SongShelf("Recently Played", state.recentlyPlayed, onSeeAll = navigator::recentlyPlayed, number = number("played")) { index ->
+                        SongShelf("Recently Played", state.recentlyPlayed, onSeeAll = navigator::recentlyPlayed) { index ->
                             player.play(state.recentlyPlayed, index)
                         }
                     }
                 }
                 if (state.mostPlayed.isNotEmpty()) {
                     item(key = "most") {
-                        SongShelf("Most Played", state.mostPlayed, onSeeAll = null, number = number("most")) { index ->
+                        SongShelf("Most Played", state.mostPlayed, onSeeAll = null) { index ->
                             player.play(state.mostPlayed, index)
                         }
                     }
                 }
-                if (state.liked.isNotEmpty()) {
-                    item(key = "liked") {
-                        SongShelf("Liked Songs", state.liked, onSeeAll = navigator::liked, number = number("liked")) { index ->
-                            player.play(state.liked, index)
-                        }
-                    }
-                }
                 item(key = "added") {
-                    SongShelf("Recently Added", state.recentlyAdded, onSeeAll = navigator::recentlyAdded, number = number("added")) { index ->
+                    SongShelf("Recently Added", state.recentlyAdded, onSeeAll = navigator::recentlyAdded) { index ->
                         player.play(state.recentlyAdded, index)
-                    }
-                }
-                if (state.albums.size > 1) {
-                    item(key = "albums") {
-                        SectionHeader("Albums", action = "See all", onAction = navigator::albums, number = number("albums"))
-                        Spacer(Modifier.height(Spacing.s))
-                        LazyRow(
-                            contentPadding = PaddingValues(horizontal = Spacing.gutter),
-                            horizontalArrangement = Arrangement.spacedBy(Spacing.m),
-                        ) {
-                            items(state.albums, key = { it.key }) { album ->
-                                AlbumCard(album, onClick = { navigator.album(album.key) }, modifier = Modifier.width(140.dp), onPlay = { player.play(album.songs) })
-                            }
-                        }
                     }
                 }
             }
@@ -294,7 +264,7 @@ private fun ContinueCard(song: Song, isPlaying: Boolean, onOpen: () -> Unit, onP
         Artwork(song, Modifier.size(56.dp), corner = 28.dp, sizeHint = 64.dp)
         Spacer(Modifier.width(Spacing.m))
         Column(Modifier.weight(1f)) {
-            Text(if (isPlaying) "NOW PLAYING" else "CONTINUE LISTENING", style = NmTheme.type.dotCaption, color = colors.accent)
+            Text(if (isPlaying) "NOW PLAYING" else "CONTINUE LISTENING", style = NmTheme.type.dotCaption, color = colors.textTertiary)
             Spacer(Modifier.height(2.dp))
             Text(song.title, style = NmTheme.type.title, color = colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(song.artist, style = NmTheme.type.caption, color = colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
